@@ -262,5 +262,56 @@ final class WriteBuffer
             $this->buffer[$this->offset + $offset + 4 + $i] = $value[$i];
         }
     }
+
+    public function writeTimestamp(int $offset, int $value): void
+    {
+        $this->writeUInt64($offset, $value);
+    }
+
+    public function writeUuid(int $offset, string $value): void
+    {
+        $this->ensureSpace($offset, 16);
+        // UUID as 16 bytes
+        for ($i = 0; $i < 16; $i++) {
+            $this->buffer[$this->offset + $offset + $i] = $value[$i];
+        }
+    }
+
+    public function writeBytes(int $offset, string $value): void
+    {
+        $len = strlen($value);
+        $this->ensureSpace($offset, 4 + $len);
+        
+        // Write length as int32
+        $packed = pack('l', $len);
+        for ($i = 0; $i < 4; $i++) {
+            $this->buffer[$this->offset + $offset + $i] = $packed[$i];
+        }
+        
+        // Write binary data
+        for ($i = 0; $i < $len; $i++) {
+            $this->buffer[$this->offset + $offset + 4 + $i] = $value[$i];
+        }
+    }
+
+    public function writeDecimal(int $offset, string $value, int $scale, bool $negative): void
+    {
+        $this->ensureSpace($offset, 16);
+        
+        // Write unscaled value to bytes 0-11 (96-bit little-endian)
+        for ($i = 0; $i < 12; $i++) {
+            $this->buffer[$this->offset + $offset + $i] = $value[$i] ?? "\x00";
+        }
+        
+        // Bytes 12-13 are unused (zero)
+        $this->buffer[$this->offset + $offset + 12] = "\x00";
+        $this->buffer[$this->offset + $offset + 13] = "\x00";
+        
+        // Byte 14 = scale
+        $this->buffer[$this->offset + $offset + 14] = chr($scale & 0xFF);
+        
+        // Byte 15 = sign
+        $this->buffer[$this->offset + $offset + 15] = $negative ? "\x80" : "\x00";
+    }
 }
 

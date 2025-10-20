@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.3] - 2025-10-21
+
+### Added
+- **timestamp** type support (uint64, nanoseconds since epoch)
+- **uuid** type support (16 bytes, standard UUID format)
+- **bytes** type support (size-prefixed binary data)
+- **decimal** type support (16 bytes, .NET Decimal format)
+- Cross-platform type tests (PHP ↔ Rust)
+
+### Verified
+- ✅ All new types working in PHP
+- ✅ Cross-platform binary compatibility with Rust
+- ✅ Round-trip serialization for all types
+
 ## [0.0.2] - 2025-10-21
 
 ### Fixed

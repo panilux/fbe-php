@@ -147,5 +147,43 @@ final class ReadBuffer
         $len = $this->readInt32($offset);
         return substr($this->buffer, $this->offset + $offset + 4, $len);
     }
+
+    public function readTimestamp(int $offset): int
+    {
+        return $this->readUInt64($offset);
+    }
+
+    public function readUuid(int $offset): string
+    {
+        return substr($this->buffer, $this->offset + $offset, 16);
+    }
+
+    public function readBytes(int $offset): string
+    {
+        $len = $this->readInt32($offset);
+        return substr($this->buffer, $this->offset + $offset + 4, $len);
+    }
+
+    /**
+     * Read decimal value
+     * Returns array with keys: 'value' (string, 12 bytes), 'scale' (int), 'negative' (bool)
+     */
+    public function readDecimal(int $offset): array
+    {
+        // Read 96-bit unscaled value from bytes 0-11
+        $value = substr($this->buffer, $this->offset + $offset, 12);
+        
+        // Read scale from byte 14
+        $scale = ord($this->buffer[$this->offset + $offset + 14]);
+        
+        // Read sign from byte 15
+        $negative = (ord($this->buffer[$this->offset + $offset + 15]) & 0x80) !== 0;
+        
+        return [
+            'value' => $value,
+            'scale' => $scale,
+            'negative' => $negative,
+        ];
+    }
 }
 
