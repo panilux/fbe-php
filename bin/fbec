@@ -139,8 +139,8 @@ class FBEGenerator
                 if (preg_match('/(\w+)(\?)?(\[\])?\s+(\w+)/', $line, $fieldMatch)) {
                     $fields[] = [
                         'fbeType' => $fieldMatch[1],
-                        'isOptional' => isset($fieldMatch[2]),
-                        'isArray' => isset($fieldMatch[3]),
+                        'isOptional' => !empty($fieldMatch[2]),
+                        'isArray' => !empty($fieldMatch[3]),
                         'name' => $fieldMatch[4],
                     ];
                 }
@@ -206,6 +206,8 @@ class FBEGenerator
         $fileName = "$outputDir/$name.php";
 
         $code = "<?php\n\ndeclare(strict_types=1);\n\n";
+        $code .= "use FBE\\WriteBuffer;\n";
+        $code .= "use FBE\\ReadBuffer;\n\n";
         $code .= "class $name\n{\n";
         
         foreach ($struct['fields'] as $field) {
@@ -218,10 +220,107 @@ class FBEGenerator
             $default = $this->getDefaultValue($field);
             $code .= "        \$this->{$field['name']} = $default;\n";
         }
+        $code .= "    }\n\n";
+
+        // Serialize method
+        $code .= "    public function serialize(WriteBuffer \$buffer): int\n    {\n";
+        $code .= "        \$offset = 0;\n";
+        foreach ($struct['fields'] as $field) {
+            $code .= $this->generateSerializeField($field);
+        }
+        $code .= "        return \$offset;\n";
+        $code .= "    }\n\n";
+
+        // Deserialize method
+        $code .= "    public static function deserialize(ReadBuffer \$buffer): self\n    {\n";
+        $code .= "        \$obj = new self();\n";
+        $code .= "        \$offset = 0;\n";
+        foreach ($struct['fields'] as $field) {
+            $code .= $this->generateDeserializeField($field);
+        }
+        $code .= "        return \$obj;\n";
         $code .= "    }\n";
+        
         $code .= "}\n";
 
         file_put_contents($fileName, $code);
+    }
+
+    private function generateSerializeField(array $field): string
+    {
+        $writeMethod = $this->getWriteMethod($field['fbeType']);
+        $size = $this->getTypeSize($field['fbeType']);
+        
+        if ($field['fbeType'] === 'string') {
+            return "        \$buffer->{$writeMethod}(\$offset, \$this->{$field['name']});\n" .
+                   "        \$offset += 4 + strlen(\$this->{$field['name']});\n";
+        } else {
+            return "        \$buffer->{$writeMethod}(\$offset, \$this->{$field['name']});\n" .
+                   "        \$offset += $size;\n";
+        }
+    }
+
+    private function generateDeserializeField(array $field): string
+    {
+        $readMethod = $this->getReadMethod($field['fbeType']);
+        $size = $this->getTypeSize($field['fbeType']);
+        
+        if ($field['fbeType'] === 'string') {
+            return "        \$obj->{$field['name']} = \$buffer->{$readMethod}(\$offset);\n" .
+                   "        \$offset += 4 + strlen(\$obj->{$field['name']});\n";
+        } else {
+            return "        \$obj->{$field['name']} = \$buffer->{$readMethod}(\$offset);\n" .
+                   "        \$offset += $size;\n";
+        }
+    }
+
+    private function getWriteMethod(string $fbeType): string
+    {
+        return match ($fbeType) {
+            'bool' => 'writeBool',
+            'byte', 'int8' => 'writeInt8',
+            'uint8' => 'writeUInt8',
+            'int16' => 'writeInt16',
+            'uint16' => 'writeUInt16',
+            'int32' => 'writeInt32',
+            'uint32' => 'writeUInt32',
+            'int64' => 'writeInt64',
+            'uint64' => 'writeUInt64',
+            'float' => 'writeFloat',
+            'double' => 'writeDouble',
+            'string' => 'writeString',
+            default => 'writeInt32',
+        };
+    }
+
+    private function getReadMethod(string $fbeType): string
+    {
+        return match ($fbeType) {
+            'bool' => 'readBool',
+            'byte', 'int8' => 'readInt8',
+            'uint8' => 'readUInt8',
+            'int16' => 'readInt16',
+            'uint16' => 'readUInt16',
+            'int32' => 'readInt32',
+            'uint32' => 'readUInt32',
+            'int64' => 'readInt64',
+            'uint64' => 'readUInt64',
+            'float' => 'readFloat',
+            'double' => 'readDouble',
+            'string' => 'readString',
+            default => 'readInt32',
+        };
+    }
+
+    private function getTypeSize(string $fbeType): int
+    {
+        return match ($fbeType) {
+            'bool', 'byte', 'int8', 'uint8' => 1,
+            'int16', 'uint16' => 2,
+            'int32', 'uint32', 'float' => 4,
+            'int64', 'uint64', 'double' => 8,
+            default => 4,
+        };
     }
 
     private function mapFieldType(array $field): string
