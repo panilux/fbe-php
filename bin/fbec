@@ -1,0 +1,374 @@
+#!/usr/bin/env php
+<?php
+/**
+ * Fast Binary Encoding compiler for PHP
+ * 
+ * Generates PHP code from .fbe schema files
+ * HERSEY DAHA IYI BIR PANILUX ICIN! 🚀
+ */
+
+declare(strict_types=1);
+
+if ($argc < 3) {
+    fwrite(STDERR, "Usage: fbec <input.fbe> <output_dir>\n");
+    exit(1);
+}
+
+$inputFile = $argv[1];
+$outputDir = $argv[2];
+
+try {
+    $generator = new FBEGenerator();
+    $generator->generate($inputFile, $outputDir);
+    echo "✓ Code generation successful!\n";
+} catch (Exception $e) {
+    fwrite(STDERR, "✗ Error: {$e->getMessage()}\n");
+    exit(1);
+}
+
+class FBEGenerator
+{
+    private array $enums = [];
+    private array $flags = [];
+    private array $structs = [];
+
+    public function generate(string $inputFile, string $outputDir): void
+    {
+        $content = file_get_contents($inputFile);
+        if ($content === false) {
+            throw new Exception("Failed to read $inputFile");
+        }
+
+        if (!is_dir($outputDir) && !mkdir($outputDir, 0755, true)) {
+            throw new Exception("Failed to create output directory");
+        }
+
+        $this->parse($content);
+        $this->generateCode($outputDir);
+
+        echo sprintf("Generated %d enums, %d flags, %d structs\n",
+            count($this->enums), count($this->flags), count($this->structs));
+    }
+
+    private function parse(string $content): void
+    {
+        $this->parseEnums($content);
+        $this->parseFlags($content);
+        $this->parseStructs($content);
+    }
+
+    private function parseEnums(string $content): void
+    {
+        preg_match_all('/enum\s+(\w+)\s*:\s*(\w+)\s*\{([^}]+)\}/s', $content, $matches, PREG_SET_ORDER);
+        
+        foreach ($matches as $match) {
+            $name = $match[1];
+            $baseType = $match[2];
+            $body = $match[3];
+
+            $values = [];
+            $index = 0;
+            foreach (explode("\n", $body) as $line) {
+                $line = trim($line);
+                if (empty($line) || str_starts_with($line, '//')) {
+                    continue;
+                }
+
+                if (str_contains($line, '=')) {
+                    [$key, $val] = explode('=', $line, 2);
+                    $key = trim($key);
+                    $val = trim(rtrim($val, ';'));
+                    $values[$key] = $val;
+                    $index++;
+                } else {
+                    $key = trim(rtrim($line, ';'));
+                    if (!empty($key)) {
+                        $values[$key] = (string)$index;
+                        $index++;
+                    }
+                }
+            }
+
+            $this->enums[] = compact('name', 'baseType', 'values');
+        }
+    }
+
+    private function parseFlags(string $content): void
+    {
+        preg_match_all('/flags\s+(\w+)\s*:\s*(\w+)\s*\{([^}]+)\}/s', $content, $matches, PREG_SET_ORDER);
+        
+        foreach ($matches as $match) {
+            $name = $match[1];
+            $baseType = $match[2];
+            $body = $match[3];
+
+            $values = [];
+            foreach (explode("\n", $body) as $line) {
+                $line = trim($line);
+                if (empty($line) || str_starts_with($line, '//')) {
+                    continue;
+                }
+
+                if (str_contains($line, '=')) {
+                    [$key, $val] = explode('=', $line, 2);
+                    $key = trim($key);
+                    $val = trim(rtrim($val, ';'));
+                    $values[$key] = $val;
+                }
+            }
+
+            $this->flags[] = compact('name', 'baseType', 'values');
+        }
+    }
+
+    private function parseStructs(string $content): void
+    {
+        preg_match_all('/struct\s+(\w+)(?:\(\d+\))?\s*\{([^}]+)\}/s', $content, $matches, PREG_SET_ORDER);
+        
+        foreach ($matches as $match) {
+            $name = $match[1];
+            $body = $match[2];
+
+            $fields = [];
+            foreach (explode("\n", $body) as $line) {
+                $line = trim($line);
+                if (empty($line) || str_starts_with($line, '//') || str_starts_with($line, '[')) {
+                    continue;
+                }
+
+                if (preg_match('/(\w+)(\?)?(\[\])?\s+(\w+)/', $line, $fieldMatch)) {
+                    $fields[] = [
+                        'fbeType' => $fieldMatch[1],
+                        'isOptional' => !empty($fieldMatch[2]),
+                        'isArray' => !empty($fieldMatch[3]),
+                        'name' => $fieldMatch[4],
+                    ];
+                }
+            }
+
+            $this->structs[] = compact('name', 'fields');
+        }
+    }
+
+    private function generateCode(string $outputDir): void
+    {
+        foreach ($this->enums as $enum) {
+            $this->generateEnum($enum, $outputDir);
+        }
+
+        foreach ($this->flags as $flags) {
+            $this->generateFlags($flags, $outputDir);
+        }
+
+        foreach ($this->structs as $struct) {
+            $this->generateStruct($struct, $outputDir);
+        }
+    }
+
+    private function generateEnum(array $enum, string $outputDir): void
+    {
+        $name = $enum['name'];
+        $fileName = "$outputDir/$name.php";
+
+        $code = "<?php\n\ndeclare(strict_types=1);\n\n";
+        $code .= "enum $name: int\n{\n";
+        
+        foreach ($enum['values'] as $key => $val) {
+            $code .= "    case " . ucfirst($key) . " = $val;\n";
+        }
+        
+        $code .= "}\n";
+
+        file_put_contents($fileName, $code);
+    }
+
+    private function generateFlags(array $flags, string $outputDir): void
+    {
+        $name = $flags['name'];
+        $fileName = "$outputDir/$name.php";
+
+        $code = "<?php\n\ndeclare(strict_types=1);\n\n";
+        $code .= "class $name\n{\n";
+        
+        foreach ($flags['values'] as $key => $val) {
+            $constName = strtoupper(preg_replace('/([a-z])([A-Z])/', '$1_$2', $key));
+            $code .= "    public const " . strtoupper($key) . " = $val;\n";
+        }
+        
+        $code .= "}\n";
+
+        file_put_contents($fileName, $code);
+    }
+
+    private function generateStruct(array $struct, string $outputDir): void
+    {
+        $name = $struct['name'];
+        $fileName = "$outputDir/$name.php";
+
+        $code = "<?php\n\ndeclare(strict_types=1);\n\n";
+        $code .= "use FBE\\WriteBuffer;\n";
+        $code .= "use FBE\\ReadBuffer;\n\n";
+        $code .= "class $name\n{\n";
+        
+        foreach ($struct['fields'] as $field) {
+            $phpType = $this->mapFieldType($field);
+            $code .= "    public $phpType \${$field['name']};\n";
+        }
+        
+        $code .= "\n    public function __construct()\n    {\n";
+        foreach ($struct['fields'] as $field) {
+            $default = $this->getDefaultValue($field);
+            $code .= "        \$this->{$field['name']} = $default;\n";
+        }
+        $code .= "    }\n\n";
+
+        // Serialize method
+        $code .= "    public function serialize(WriteBuffer \$buffer): int\n    {\n";
+        $code .= "        \$offset = 0;\n";
+        foreach ($struct['fields'] as $field) {
+            $code .= $this->generateSerializeField($field);
+        }
+        $code .= "        return \$offset;\n";
+        $code .= "    }\n\n";
+
+        // Deserialize method
+        $code .= "    public static function deserialize(ReadBuffer \$buffer): self\n    {\n";
+        $code .= "        \$obj = new self();\n";
+        $code .= "        \$offset = 0;\n";
+        foreach ($struct['fields'] as $field) {
+            $code .= $this->generateDeserializeField($field);
+        }
+        $code .= "        return \$obj;\n";
+        $code .= "    }\n";
+        
+        $code .= "}\n";
+
+        file_put_contents($fileName, $code);
+    }
+
+    private function generateSerializeField(array $field): string
+    {
+        $writeMethod = $this->getWriteMethod($field['fbeType']);
+        $size = $this->getTypeSize($field['fbeType']);
+        $isPrimitive = in_array($field['fbeType'], ['bool', 'byte', 'int8', 'int16', 'int32', 'int64', 
+                                                      'uint8', 'uint16', 'uint32', 'uint64', 'float', 'double', 'string']);
+        
+        if ($field['fbeType'] === 'string') {
+            return "        \$buffer->{$writeMethod}(\$offset, \$this->{$field['name']});\n" .
+                   "        \$offset += 4 + strlen(\$this->{$field['name']});\n";
+        } elseif (!$isPrimitive) {
+            // Enum - cast to int
+            return "        \$buffer->{$writeMethod}(\$offset, \$this->{$field['name']}->value);\n" .
+                   "        \$offset += $size;\n";
+        } else {
+            return "        \$buffer->{$writeMethod}(\$offset, \$this->{$field['name']});\n" .
+                   "        \$offset += $size;\n";
+        }
+    }
+
+    private function generateDeserializeField(array $field): string
+    {
+        $readMethod = $this->getReadMethod($field['fbeType']);
+        $size = $this->getTypeSize($field['fbeType']);
+        $isPrimitive = in_array($field['fbeType'], ['bool', 'byte', 'int8', 'int16', 'int32', 'int64', 
+                                                      'uint8', 'uint16', 'uint32', 'uint64', 'float', 'double', 'string']);
+        
+        if ($field['fbeType'] === 'string') {
+            return "        \$obj->{$field['name']} = \$buffer->{$readMethod}(\$offset);\n" .
+                   "        \$offset += 4 + strlen(\$obj->{$field['name']});\n";
+        } elseif (!$isPrimitive) {
+            // Enum - from int to enum
+            return "        \$obj->{$field['name']} = {$field['fbeType']}::from(\$buffer->{$readMethod}(\$offset));\n" .
+                   "        \$offset += $size;\n";
+        } else {
+            return "        \$obj->{$field['name']} = \$buffer->{$readMethod}(\$offset);\n" .
+                   "        \$offset += $size;\n";
+        }
+    }
+
+    private function getWriteMethod(string $fbeType): string
+    {
+        return match ($fbeType) {
+            'bool' => 'writeBool',
+            'byte', 'int8' => 'writeInt8',
+            'uint8' => 'writeUInt8',
+            'int16' => 'writeInt16',
+            'uint16' => 'writeUInt16',
+            'int32' => 'writeInt32',
+            'uint32' => 'writeUInt32',
+            'int64' => 'writeInt64',
+            'uint64' => 'writeUInt64',
+            'float' => 'writeFloat',
+            'double' => 'writeDouble',
+            'string' => 'writeString',
+            default => 'writeInt32',
+        };
+    }
+
+    private function getReadMethod(string $fbeType): string
+    {
+        return match ($fbeType) {
+            'bool' => 'readBool',
+            'byte', 'int8' => 'readInt8',
+            'uint8' => 'readUInt8',
+            'int16' => 'readInt16',
+            'uint16' => 'readUInt16',
+            'int32' => 'readInt32',
+            'uint32' => 'readUInt32',
+            'int64' => 'readInt64',
+            'uint64' => 'readUInt64',
+            'float' => 'readFloat',
+            'double' => 'readDouble',
+            'string' => 'readString',
+            default => 'readInt32',
+        };
+    }
+
+    private function getTypeSize(string $fbeType): int
+    {
+        return match ($fbeType) {
+            'bool', 'byte', 'int8', 'uint8' => 1,
+            'int16', 'uint16' => 2,
+            'int32', 'uint32', 'float' => 4,
+            'int64', 'uint64', 'double' => 8,
+            default => 4,
+        };
+    }
+
+    private function mapFieldType(array $field): string
+    {
+        $baseType = match ($field['fbeType']) {
+            'bool' => 'bool',
+            'byte', 'int8', 'int16', 'int32', 'int64' => 'int',
+            'uint8', 'uint16', 'uint32', 'uint64' => 'int',
+            'float', 'double' => 'float',
+            'string' => 'string',
+            default => $field['fbeType'],
+        };
+
+        if ($field['isArray']) {
+            return $field['isOptional'] ? '?array' : 'array';
+        } elseif ($field['isOptional']) {
+            return "?$baseType";
+        }
+        
+        return $baseType;
+    }
+
+    private function getDefaultValue(array $field): string
+    {
+        if ($field['isArray']) {
+            return '[]';
+        }
+
+        return match ($field['fbeType']) {
+            'bool' => 'false',
+            'byte', 'int8', 'int16', 'int32', 'int64' => '0',
+            'uint8', 'uint16', 'uint32', 'uint64' => '0',
+            'float', 'double' => '0.0',
+            'string' => "''",
+            default => $field['fbeType'] . '::cases()[0]',  // First enum case
+        };
+    }
+}
+
