@@ -250,10 +250,16 @@ class FBEGenerator
     {
         $writeMethod = $this->getWriteMethod($field['fbeType']);
         $size = $this->getTypeSize($field['fbeType']);
+        $isPrimitive = in_array($field['fbeType'], ['bool', 'byte', 'int8', 'int16', 'int32', 'int64', 
+                                                      'uint8', 'uint16', 'uint32', 'uint64', 'float', 'double', 'string']);
         
         if ($field['fbeType'] === 'string') {
             return "        \$buffer->{$writeMethod}(\$offset, \$this->{$field['name']});\n" .
                    "        \$offset += 4 + strlen(\$this->{$field['name']});\n";
+        } elseif (!$isPrimitive) {
+            // Enum - cast to int
+            return "        \$buffer->{$writeMethod}(\$offset, \$this->{$field['name']}->value);\n" .
+                   "        \$offset += $size;\n";
         } else {
             return "        \$buffer->{$writeMethod}(\$offset, \$this->{$field['name']});\n" .
                    "        \$offset += $size;\n";
@@ -264,10 +270,16 @@ class FBEGenerator
     {
         $readMethod = $this->getReadMethod($field['fbeType']);
         $size = $this->getTypeSize($field['fbeType']);
+        $isPrimitive = in_array($field['fbeType'], ['bool', 'byte', 'int8', 'int16', 'int32', 'int64', 
+                                                      'uint8', 'uint16', 'uint32', 'uint64', 'float', 'double', 'string']);
         
         if ($field['fbeType'] === 'string') {
             return "        \$obj->{$field['name']} = \$buffer->{$readMethod}(\$offset);\n" .
                    "        \$offset += 4 + strlen(\$obj->{$field['name']});\n";
+        } elseif (!$isPrimitive) {
+            // Enum - from int to enum
+            return "        \$obj->{$field['name']} = {$field['fbeType']}::from(\$buffer->{$readMethod}(\$offset));\n" .
+                   "        \$offset += $size;\n";
         } else {
             return "        \$obj->{$field['name']} = \$buffer->{$readMethod}(\$offset);\n" .
                    "        \$offset += $size;\n";
@@ -355,7 +367,7 @@ class FBEGenerator
             'uint8', 'uint16', 'uint32', 'uint64' => '0',
             'float', 'double' => '0.0',
             'string' => "''",
-            default => 'null',
+            default => $field['fbeType'] . '::cases()[0]',  // First enum case
         };
     }
 }

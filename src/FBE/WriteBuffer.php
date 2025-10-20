@@ -144,24 +144,39 @@ final class WriteBuffer
         $this->offset -= $offset;
     }
 
-    // Write primitive types
+    // Write primitive types - ensure buffer has space before writing
+    private function ensureSpace(int $offset, int $size): void
+    {
+        $required = $this->offset + $offset + $size;
+        if ($required > strlen($this->buffer)) {
+            $newCapacity = max($required, strlen($this->buffer) * 2, 1024);
+            $this->buffer .= str_repeat("\0", $newCapacity - strlen($this->buffer));
+        }
+        // Update size to track written data
+        $this->size = max($this->size, $required);
+    }
+
     public function writeBool(int $offset, bool $value): void
     {
-        $this->buffer[$this->offset + $offset] = chr($value ? 1 : 0);
+        $this->ensureSpace($offset, 1);
+        $this->buffer[$this->offset + $offset] = $value ? "\x01" : "\x00";
     }
 
     public function writeInt8(int $offset, int $value): void
     {
+        $this->ensureSpace($offset, 1);
         $this->buffer[$this->offset + $offset] = chr($value & 0xFF);
     }
 
     public function writeUInt8(int $offset, int $value): void
     {
+        $this->ensureSpace($offset, 1);
         $this->buffer[$this->offset + $offset] = chr($value & 0xFF);
     }
 
     public function writeInt16(int $offset, int $value): void
     {
+        $this->ensureSpace($offset, 2);
         $packed = pack('s', $value);
         for ($i = 0; $i < 2; $i++) {
             $this->buffer[$this->offset + $offset + $i] = $packed[$i];
@@ -170,6 +185,7 @@ final class WriteBuffer
 
     public function writeUInt16(int $offset, int $value): void
     {
+        $this->ensureSpace($offset, 2);
         $packed = pack('S', $value);
         for ($i = 0; $i < 2; $i++) {
             $this->buffer[$this->offset + $offset + $i] = $packed[$i];
@@ -178,6 +194,7 @@ final class WriteBuffer
 
     public function writeInt32(int $offset, int $value): void
     {
+        $this->ensureSpace($offset, 4);
         $packed = pack('l', $value);
         for ($i = 0; $i < 4; $i++) {
             $this->buffer[$this->offset + $offset + $i] = $packed[$i];
@@ -186,6 +203,7 @@ final class WriteBuffer
 
     public function writeUInt32(int $offset, int $value): void
     {
+        $this->ensureSpace($offset, 4);
         $packed = pack('L', $value);
         for ($i = 0; $i < 4; $i++) {
             $this->buffer[$this->offset + $offset + $i] = $packed[$i];
@@ -194,6 +212,7 @@ final class WriteBuffer
 
     public function writeInt64(int $offset, int $value): void
     {
+        $this->ensureSpace($offset, 8);
         $packed = pack('q', $value);
         for ($i = 0; $i < 8; $i++) {
             $this->buffer[$this->offset + $offset + $i] = $packed[$i];
@@ -202,6 +221,7 @@ final class WriteBuffer
 
     public function writeUInt64(int $offset, int $value): void
     {
+        $this->ensureSpace($offset, 8);
         $packed = pack('Q', $value);
         for ($i = 0; $i < 8; $i++) {
             $this->buffer[$this->offset + $offset + $i] = $packed[$i];
@@ -210,6 +230,7 @@ final class WriteBuffer
 
     public function writeFloat(int $offset, float $value): void
     {
+        $this->ensureSpace($offset, 4);
         $packed = pack('f', $value);
         for ($i = 0; $i < 4; $i++) {
             $this->buffer[$this->offset + $offset + $i] = $packed[$i];
@@ -218,9 +239,27 @@ final class WriteBuffer
 
     public function writeDouble(int $offset, float $value): void
     {
+        $this->ensureSpace($offset, 8);
         $packed = pack('d', $value);
         for ($i = 0; $i < 8; $i++) {
             $this->buffer[$this->offset + $offset + $i] = $packed[$i];
+        }
+    }
+
+    public function writeString(int $offset, string $value): void
+    {
+        $len = strlen($value);
+        $this->ensureSpace($offset, 4 + $len);
+        
+        // Write length as int32
+        $packed = pack('l', $len);
+        for ($i = 0; $i < 4; $i++) {
+            $this->buffer[$this->offset + $offset + $i] = $packed[$i];
+        }
+        
+        // Write string data
+        for ($i = 0; $i < $len; $i++) {
+            $this->buffer[$this->offset + $offset + 4 + $i] = $value[$i];
         }
     }
 }

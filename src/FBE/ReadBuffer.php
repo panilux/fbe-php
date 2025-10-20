@@ -13,11 +13,17 @@ final class ReadBuffer
     private int $size;
     private int $offset;
 
-    public function __construct()
+    public function __construct(?string $buffer = null)
     {
-        $this->buffer = '';
-        $this->size = 0;
-        $this->offset = 0;
+        if ($buffer !== null) {
+            $this->buffer = $buffer;
+            $this->size = strlen($buffer);
+            $this->offset = 0;
+        } else {
+            $this->buffer = '';
+            $this->size = 0;
+            $this->offset = 0;
+        }
     }
 
     public function data(): string
@@ -134,6 +140,12 @@ final class ReadBuffer
     {
         $data = substr($this->buffer, $this->offset + $offset, 8);
         return unpack('d', $data)[1];
+    }
+
+    public function readString(int $offset): string
+    {
+        $len = $this->readInt32($offset);
+        return substr($this->buffer, $this->offset + $offset + 4, $len);
     }
 }
 

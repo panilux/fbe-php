@@ -15,7 +15,7 @@ class User
     {
         $this->id = 0;
         $this->name = '';
-        $this->side = null;
+        $this->side = Side::cases()[0];
     }
 
     public function serialize(WriteBuffer $buffer): int
@@ -25,8 +25,8 @@ class User
         $offset += 4;
         $buffer->writeString($offset, $this->name);
         $offset += 4 + strlen($this->name);
-        $buffer->writeInt32($offset, $this->side);
-        $offset += 4;
+        $buffer->writeInt8($offset, $this->side->value);
+        $offset += 1;
         return $offset;
     }
 
@@ -38,8 +38,9 @@ class User
         $offset += 4;
         $obj->name = $buffer->readString($offset);
         $offset += 4 + strlen($obj->name);
-        $obj->side = $buffer->readInt32($offset);
-        $offset += 4;
+        $obj->side = Side::from($buffer->readInt8($offset));
+        $offset += 1;
         return $obj;
     }
 }
+
