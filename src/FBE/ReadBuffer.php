@@ -298,5 +298,47 @@ final class ReadBuffer
     {
         return $this->readVectorInt32($offset);
     }
+
+    // ========================================================================
+    // Collections (String)
+    // ========================================================================
+
+    /**
+     * Read vector of string values
+     */
+    public function readVectorString(int $offset): array
+    {
+        $pointer = $this->readUInt32($offset);
+        if ($pointer == 0) return [];
+        
+        $size = $this->readUInt32($pointer);
+        $values = [];
+        $currentOffset = $pointer + 4;
+        
+        for ($i = 0; $i < $size; $i++) {
+            $str = $this->readString($currentOffset);
+            $values[] = $str;
+            $currentOffset += 4 + strlen($str);
+        }
+        
+        return $values;
+    }
+
+    /**
+     * Read fixed-size array of strings
+     */
+    public function readArrayString(int $offset, int $count): array
+    {
+        $values = [];
+        $currentOffset = $offset;
+        
+        for ($i = 0; $i < $count; $i++) {
+            $str = $this->readString($currentOffset);
+            $values[] = $str;
+            $currentOffset += 4 + strlen($str);
+        }
+        
+        return $values;
+    }
 }
 

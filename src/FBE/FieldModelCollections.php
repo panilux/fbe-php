@@ -127,6 +127,97 @@ final class FieldModelMapInt32 extends FieldModel
 // Set<T> - Unique values
 // ============================================================================
 
+// ============================================================================
+// String Collections
+// ============================================================================
+
+final class FieldModelVectorString extends FieldModel
+{
+    public function size(): int { return 4; }
+
+    public function extra(): int
+    {
+        if ($this->buffer instanceof ReadBuffer) {
+            $pointer = $this->buffer->readUInt32($this->offset);
+            if ($pointer == 0) return 0;
+            $size = $this->buffer->readUInt32($pointer);
+            $total = 4;
+            $currentOffset = $pointer + 4;
+            for ($i = 0; $i < $size; $i++) {
+                $len = $this->buffer->readUInt32($currentOffset);
+                $total += 4 + $len;
+                $currentOffset += 4 + $len;
+            }
+            return $total;
+        }
+        return 0;
+    }
+
+    public function get(): array
+    {
+        if ($this->buffer instanceof ReadBuffer) {
+            return $this->buffer->readVectorString($this->offset);
+        }
+        throw new \RuntimeException("Cannot read from WriteBuffer");
+    }
+
+    public function set(array $values): void
+    {
+        if ($this->buffer instanceof WriteBuffer) {
+            $this->buffer->writeVectorString($this->offset, $values);
+            return;
+        }
+        throw new \RuntimeException("Cannot write to ReadBuffer");
+    }
+}
+
+final class FieldModelArrayString extends FieldModel
+{
+    private int $count;
+
+    public function __construct(WriteBuffer|ReadBuffer $buffer, int $offset, int $count)
+    {
+        parent::__construct($buffer, $offset);
+        $this->count = $count;
+    }
+
+    public function size(): int
+    {
+        // Variable size, need to calculate
+        if ($this->buffer instanceof ReadBuffer) {
+            $total = 0;
+            $currentOffset = $this->offset;
+            for ($i = 0; $i < $this->count; $i++) {
+                $len = $this->buffer->readUInt32($currentOffset);
+                $total += 4 + $len;
+                $currentOffset += 4 + $len;
+            }
+            return $total;
+        }
+        return 0;
+    }
+
+    public function get(): array
+    {
+        if ($this->buffer instanceof ReadBuffer) {
+            return $this->buffer->readArrayString($this->offset, $this->count);
+        }
+        throw new \RuntimeException("Cannot read from WriteBuffer");
+    }
+
+    public function set(array $values): void
+    {
+        if ($this->buffer instanceof WriteBuffer) {
+            if (count($values) !== $this->count) {
+                throw new \InvalidArgumentException("Array size mismatch");
+            }
+            $this->buffer->writeArrayString($this->offset, $values);
+            return;
+        }
+        throw new \RuntimeException("Cannot write to ReadBuffer");
+    }
+}
+
 final class FieldModelSetInt32 extends FieldModel
 {
     public function size(): int { return 4; } // Pointer only
