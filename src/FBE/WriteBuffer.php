@@ -313,5 +313,84 @@ final class WriteBuffer
         // Byte 15 = sign
         $this->buffer[$this->offset + $offset + 15] = $negative ? "\x80" : "\x00";
     }
+
+    /**
+     * Write vector of int32 values
+     * Format: 4-byte offset pointer → (4-byte size + elements)
+     */
+    public function writeVectorInt32(int $offset, array $values): int
+    {
+        // First ensure space for pointer
+        $this->ensureSpace($offset, 4);
+        
+        $size = count($values);
+        $dataSize = 4 + ($size * 4); // 4 bytes size + elements
+        $dataOffset = $this->allocate($dataSize);
+        
+        // Write pointer at offset (relative to current offset)
+        $this->writeUInt32($offset, $dataOffset - $this->offset);
+        
+        // Write size at data_offset
+        $this->writeUInt32($dataOffset - $this->offset, $size);
+        
+        // Write elements
+        foreach ($values as $i => $value) {
+            $this->writeInt32($dataOffset - $this->offset + 4 + ($i * 4), $value);
+        }
+        
+        return $dataSize;
+    }
+
+    /**
+     * Write fixed-size array of int32 values (inline, no pointer)
+     * Format: N × 4 bytes (elements only)
+     */
+    public function writeArrayInt32(int $offset, array $values): void
+    {
+        foreach ($values as $i => $value) {
+            $this->writeInt32($offset + ($i * 4), $value);
+        }
+    }
+
+    /**
+     * Write map of int32 key-value pairs
+     * Format: 4-byte offset pointer → (4-byte size + key-value pairs)
+     * @param array $entries Associative array of key => value pairs
+     */
+    public function writeMapInt32(int $offset, array $entries): int
+    {
+        // First ensure space for pointer
+        $this->ensureSpace($offset, 4);
+        
+        $size = count($entries);
+        $dataSize = 4 + ($size * 8); // 4 bytes size + (key+value) pairs
+        $dataOffset = $this->allocate($dataSize);
+        
+        // Write pointer at offset
+        $this->writeUInt32($offset, $dataOffset - $this->offset);
+        
+        // Write size at data_offset
+        $this->writeUInt32($dataOffset - $this->offset, $size);
+        
+        // Write key-value pairs
+        $i = 0;
+        foreach ($entries as $key => $value) {
+            $this->writeInt32($dataOffset - $this->offset + 4 + ($i * 8), $key);
+            $this->writeInt32($dataOffset - $this->offset + 4 + ($i * 8) + 4, $value);
+            $i++;
+        }
+        
+        return $dataSize;
+    }
+
+    /**
+     * Write set of int32 values (unique values, same format as vector)
+     * Format: 4-byte offset pointer → (4-byte size + elements)
+     * Note: Uniqueness constraint enforced at application level
+     */
+    public function writeSetInt32(int $offset, array $values): int
+    {
+        return $this->writeVectorInt32($offset, $values);
+    }
 }
 
