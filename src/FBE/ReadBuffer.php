@@ -340,5 +340,51 @@ final class ReadBuffer
         
         return $values;
     }
+
+    // ========================================================================
+    // Collections (Float/Double)
+    // ========================================================================
+
+    public function readVectorFloat(int $offset): array
+    {
+        $pointer = $this->readUInt32($offset);
+        if ($pointer == 0) return [];
+        $size = $this->readUInt32($pointer);
+        $values = [];
+        for ($i = 0; $i < $size; $i++) {
+            $values[] = $this->readFloat($pointer + 4 + ($i * 4));
+        }
+        return $values;
+    }
+
+    public function readArrayFloat(int $offset, int $count): array
+    {
+        $values = [];
+        for ($i = 0; $i < $count; $i++) {
+            $values[] = $this->readFloat($offset + ($i * 4));
+        }
+        return $values;
+    }
+
+    public function readVectorDouble(int $offset): array
+    {
+        $pointer = $this->readUInt32($offset);
+        if ($pointer == 0) return [];
+        $size = $this->readUInt32($pointer);
+        $values = [];
+        for ($i = 0; $i < $size; $i++) {
+            $values[] = $this->readDouble($pointer + 4 + ($i * 8));
+        }
+        return $values;
+    }
+
+    public function readArrayDouble(int $offset, int $count): array
+    {
+        $values = [];
+        for ($i = 0; $i < $count; $i++) {
+            $values[] = $this->readDouble($offset + ($i * 8));
+        }
+        return $values;
+    }
 }
 

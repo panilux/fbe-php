@@ -454,5 +454,53 @@ final class WriteBuffer
         }
         return $currentOffset - $offset;
     }
+
+    // ========================================================================
+    // Collections (Float/Double)
+    // ========================================================================
+
+    public function writeVectorFloat(int $offset, array $values): int
+    {
+        $this->ensureSpace($offset, 4);
+        $size = count($values);
+        $dataSize = 4 + ($size * 4);
+        $dataOffset = $this->allocate($dataSize);
+        $this->writeUInt32($offset, $dataOffset - $this->offset);
+        $this->writeUInt32($dataOffset - $this->offset, $size);
+        foreach ($values as $i => $value) {
+            $this->writeFloat($dataOffset - $this->offset + 4 + ($i * 4), $value);
+        }
+        return $dataSize;
+    }
+
+    public function writeArrayFloat(int $offset, array $values): int
+    {
+        foreach ($values as $i => $value) {
+            $this->writeFloat($offset + ($i * 4), $value);
+        }
+        return count($values) * 4;
+    }
+
+    public function writeVectorDouble(int $offset, array $values): int
+    {
+        $this->ensureSpace($offset, 4);
+        $size = count($values);
+        $dataSize = 4 + ($size * 8);
+        $dataOffset = $this->allocate($dataSize);
+        $this->writeUInt32($offset, $dataOffset - $this->offset);
+        $this->writeUInt32($dataOffset - $this->offset, $size);
+        foreach ($values as $i => $value) {
+            $this->writeDouble($dataOffset - $this->offset + 4 + ($i * 8), $value);
+        }
+        return $dataSize;
+    }
+
+    public function writeArrayDouble(int $offset, array $values): int
+    {
+        foreach ($values as $i => $value) {
+            $this->writeDouble($offset + ($i * 8), $value);
+        }
+        return count($values) * 8;
+    }
 }
 

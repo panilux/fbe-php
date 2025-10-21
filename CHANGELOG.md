@@ -1,3 +1,15 @@
+## [0.1.0] - 2025-10-21
+
+### Added
+- **Float/Double Collection Support:** VectorFloat, VectorDouble, ArrayFloat, ArrayDouble
+- **Buffer Methods:** writeVectorFloat, readVectorFloat, writeVectorDouble, readVectorDouble
+- **Buffer Methods:** writeArrayFloat, readArrayFloat, writeArrayDouble, readArrayDouble
+
+### Verified
+- ✅ Float collections working
+- ✅ Double collections working
+- ✅ Fixed-size precision maintained
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -151,4 +163,3 @@ All notable changes to this project will be documented in this file.
 - FieldModel base classes
 - Basic type support (primitives, strings)
 - PHP code generator (fbec)
-
