@@ -46,7 +46,7 @@ class Order
     public string $symbol;
     public float $price;
     public int $quantity;
-    
+
     public function __construct()
     {
         $this->id = 0;
@@ -160,12 +160,12 @@ class Order
     public int $id;      // [key]
     public string $symbol;
     public float $price;
-    
+
     public function getKey(): int
     {
         return $this->id;
     }
-    
+
     public function equals(Order $other): bool
     {
         return $this->id === $other->id;

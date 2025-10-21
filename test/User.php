@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use FBE\Test\Side;
 use FBE\WriteBuffer;
 use FBE\ReadBuffer;
 

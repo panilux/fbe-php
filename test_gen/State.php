@@ -2,13 +2,14 @@
 
 declare(strict_types=1);
 
+
 class State
 {
-    public const UNKNOWN = 0x00;
-    public const INVALID = 0x01;
-    public const INITIALIZED = 0x02;
-    public const CALCULATED = 0x04;
-    public const BROKEN = 0x08;
-    public const GOOD = initialized | calculated;
-    public const BAD = unknown | invalid | broken;
+	public const int UNKNOWN     = 0x00;
+	public const int INVALID     = 0x01;
+	public const int INITIALIZED = 0x02;
+	public const int CALCULATED  = 0x04;
+	public const int BROKEN      = 0x08;
+	public const int GOOD        = self::INITIALIZED | self::CALCULATED;
+	public const int BAD         = self::UNKNOWN | self::INVALID | self::BROKEN;
 }
