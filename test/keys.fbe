@@ -1,0 +1,35 @@
+// Test schema for struct keys
+package test
+
+// Single key field
+struct Order
+{
+    [key] int32 id;
+    string symbol;
+    double price;
+}
+
+// String key field
+struct Balance
+{
+    [key] string currency;
+    double amount;
+}
+
+// Composite key (multiple key fields)
+struct UserSession
+{
+    [key] int32 userId;
+    [key] string sessionId;
+    int64 timestamp;
+    string ipAddress;
+}
+
+// No key fields
+struct LogEntry
+{
+    int64 timestamp;
+    string message;
+    string level;
+}
+
