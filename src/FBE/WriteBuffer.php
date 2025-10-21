@@ -410,5 +410,49 @@ final class WriteBuffer
     {
         return $this->writeVectorInt32($offset, $values);
     }
+
+    // ========================================================================
+    // Collections (String)
+    // ========================================================================
+
+    /**
+     * Write vector of string values
+     * Format: 4-byte offset pointer → (4-byte size + string elements)
+     */
+    public function writeVectorString(int $offset, array $values): int
+    {
+        $this->ensureSpace($offset, 4);
+        
+        $size = count($values);
+        $dataSize = 4; // size prefix
+        foreach ($values as $str) {
+            $dataSize += 4 + strlen($str);
+        }
+        
+        $dataOffset = $this->allocate($dataSize);
+        $this->writeUInt32($offset, $dataOffset - $this->offset);
+        $this->writeUInt32($dataOffset - $this->offset, $size);
+        
+        $currentOffset = $dataOffset - $this->offset + 4;
+        foreach ($values as $str) {
+            $this->writeString($currentOffset, $str);
+            $currentOffset += 4 + strlen($str);
+        }
+        
+        return $dataSize;
+    }
+
+    /**
+     * Write fixed-size array of strings
+     */
+    public function writeArrayString(int $offset, array $values): int
+    {
+        $currentOffset = $offset;
+        foreach ($values as $str) {
+            $this->writeString($currentOffset, $str);
+            $currentOffset += 4 + strlen($str);
+        }
+        return $currentOffset - $offset;
+    }
 }
 
