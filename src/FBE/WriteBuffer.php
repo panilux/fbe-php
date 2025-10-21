@@ -502,5 +502,45 @@ final class WriteBuffer
         }
         return count($values) * 8;
     }
-}
 
+
+    // Optional types
+    public function writeOptionalInt32(int $offset, ?int $value): void
+    {
+        if ($value === null) {
+            $this->writeUInt8($offset, 0);  // has_value = false
+            return;
+        }
+        
+        $this->writeUInt8($offset, 1);  // has_value = true
+        $dataOffset = $this->size;
+        $this->writeUInt32($offset + 1, $dataOffset);  // pointer to data
+        $this->writeInt32($dataOffset, $value);  // actual value
+    }
+
+    public function writeOptionalString(int $offset, ?string $value): void
+    {
+        if ($value === null) {
+            $this->writeUInt8($offset, 0);  // has_value = false
+            return;
+        }
+        
+        $this->writeUInt8($offset, 1);  // has_value = true
+        $dataOffset = $this->size;
+        $this->writeUInt32($offset + 1, $dataOffset);  // pointer to data
+        $this->writeString($dataOffset, $value);  // actual value
+    }
+
+    public function writeOptionalDouble(int $offset, ?float $value): void
+    {
+        if ($value === null) {
+            $this->writeUInt8($offset, 0);  // has_value = false
+            return;
+        }
+        
+        $this->writeUInt8($offset, 1);  // has_value = true
+        $dataOffset = $this->size;
+        $this->writeUInt32($offset + 1, $dataOffset);  // pointer to data
+        $this->writeDouble($dataOffset, $value);  // actual value
+    }
+}
