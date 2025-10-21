@@ -11,7 +11,7 @@
             "homepage": "https://panilux.com"
         }
     ],
-    "homepage": "https://gitlab.mit.sh/panilux/fbe-php",
+    "homepage": "https://github.com/panilux/fbe-php",
     "require": {
         "php": ">=8.4",
         "ext-mbstring": "*"
