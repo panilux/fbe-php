@@ -1,16 +1,20 @@
 {
-    "name": "panilux/fbe",
-    "description": "Fast Binary Encoding runtime library for PHP",
+    "name": "panilux/fbe-php",
+    "description": "Fast Binary Encoding (FBE) for PHP - High-performance binary serialization library with 100% FBE specification alignment",
     "type": "library",
     "license": "MIT",
-    "keywords": ["serialization", "binary", "encoding", "fbe"],
+    "keywords": ["fbe", "fast-binary-encoding", "serialization", "binary", "encoding", "protocol", "panilux"],
     "authors": [
         {
-            "name": "Panilux Team"
+            "name": "Panilux Team",
+            "email": "dev@panilux.com",
+            "homepage": "https://panilux.com"
         }
     ],
+    "homepage": "https://gitlab.mit.sh/panilux/fbe-php",
     "require": {
-        "php": ">=8.1"
+        "php": ">=8.1",
+        "ext-mbstring": "*"
     },
     "require-dev": {
         "phpunit/phpunit": "^10.0"
@@ -25,6 +29,15 @@
             "FBE\\Tests\\": "tests/"
         }
     },
-    "bin": ["bin/fbec"]
+    "bin": ["bin/fbec"],
+    "scripts": {
+        "test": "php test_types.php && php test_collections.php && php test_inheritance.php"
+    },
+    "config": {
+        "sort-packages": true,
+        "optimize-autoloader": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
 }
 

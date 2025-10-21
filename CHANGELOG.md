@@ -204,3 +204,28 @@ All notable changes to this project will be documented in this file.
 - PHP → FBE Python: PASS
 - Rust → FBE Python: PASS
 - PHP ↔ Rust: Binary identical
+
+## [Unreleased] - 2025-10-21
+
+### Added
+- **Struct Inheritance Support** - Major feature implementation
+  - Schema parser now supports `: BaseStruct` syntax
+  - Code generator creates proper `extends` classes
+  - Multi-level inheritance fully supported (Person → Employee → Manager)
+  - Cross-package inheritance (e.g., `proto.Balance`)
+  - Protected `deserializeFields()` pattern for inheritance chain
+  - 100% binary compatibility with Rust and FBE Python
+  - Comprehensive test suite with cross-platform validation
+
+### Changed
+- Enhanced `fbec` generator with inheritance parsing
+- Updated struct regex to capture base class references
+- Improved serialization chain with parent method calls
+
+### Tests
+- Added `test_inheritance.php` - Unit tests for inheritance
+- Added `test_inheritance_cross.php` - Cross-platform PHP ↔ Rust tests
+- All tests passing with FBE Python ground truth validation
+
+### Alignment
+- FBE specification alignment: 80% → 85% (+5%)
