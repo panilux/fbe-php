@@ -26,7 +26,7 @@ composer require panilux/fbe-php
 ### Manual Installation
 
 ```bash
-git clone https://gitlab.mit.sh/panilux/fbe-php.git
+git clone https://github.com/panilux/fbe-php.git
 cd fbe-php
 ```
 
@@ -270,8 +270,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - Based on [Fast Binary Encoding](https://github.com/chronoxor/FastBinaryEncoding) by Ivan Shynkarenka
 - Developed for [Panilux](https://panilux.com)
-
----
-
-**HERSEY DAHA IYI BIR PANILUX ICIN! 🚀**
-

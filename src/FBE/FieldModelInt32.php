@@ -6,10 +6,8 @@ namespace FBE;
 
 /**
  * Fast Binary Encoding int32 field model (PHP 8.4+)
- * 
+ *
  * Field model for 32-bit signed integers with modern PHP 8.4 features.
- * 
- * HERSEY DAHA IYI BIR PANILUX ICIN! 🚀
  */
 final class FieldModelInt32 extends FieldModel
 {
@@ -29,7 +27,7 @@ final class FieldModelInt32 extends FieldModel
         if ($this->buffer instanceof ReadBuffer) {
             return $this->buffer->readInt32($this->offset);
         }
-        
+
         throw new \RuntimeException("Cannot read from WriteBuffer");
     }
 
@@ -42,7 +40,7 @@ final class FieldModelInt32 extends FieldModel
             $this->buffer->writeInt32($this->offset, $value);
             return;
         }
-        
+
         throw new \RuntimeException("Cannot write to ReadBuffer");
     }
 }

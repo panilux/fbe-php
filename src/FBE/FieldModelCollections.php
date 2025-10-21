@@ -6,10 +6,8 @@ namespace FBE;
 
 /**
  * Fast Binary Encoding collection field models (PHP 8.4+)
- * 
+ *
  * Collection field models: Vector, Array, Map, Set
- * 
- * HERSEY DAHA IYI BIR PANILUX ICIN! 🚀
  */
 
 // ============================================================================

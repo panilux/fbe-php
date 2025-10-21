@@ -1,7 +1,6 @@
 <?php
 /**
  * Cross-platform struct keys test: PHP ↔ Rust
- * HERSEY DAHA IYI BIR PANILUX ICIN! 🚀
  */
 
 declare(strict_types=1);
@@ -36,11 +35,11 @@ if (file_exists('/tmp/rust_order.bin')) {
     $data = file_get_contents('/tmp/rust_order.bin');
     $readBuffer = new ReadBuffer($data);
     $order2 = Order::deserialize($readBuffer);
-    
+
     echo "✓ PHP read Order from Rust\n";
     echo "  Key: " . json_encode($order2->getKey()) . "\n";
     echo "  Symbol: {$order2->symbol}, Price: {$order2->price}\n";
-    
+
     assert($order2->id === 123);
     assert($order2->symbol === "AAPL");
     assert($order2->price === 150.50);
@@ -68,11 +67,11 @@ if (file_exists('/tmp/rust_balance.bin')) {
     $data = file_get_contents('/tmp/rust_balance.bin');
     $readBuffer = new ReadBuffer($data);
     $balance2 = Balance::deserialize($readBuffer);
-    
+
     echo "✓ PHP read Balance from Rust\n";
     echo "  Key: " . json_encode($balance2->getKey()) . "\n";
     echo "  Amount: {$balance2->amount}\n";
-    
+
     assert($balance2->currency === "USD");
     assert($balance2->amount === 1000.00);
     assert($balance->equals($balance2), "Balances should be equal (same key)");
@@ -101,11 +100,11 @@ if (file_exists('/tmp/rust_session.bin')) {
     $data = file_get_contents('/tmp/rust_session.bin');
     $readBuffer = new ReadBuffer($data);
     $session2 = UserSession::deserialize($readBuffer);
-    
+
     echo "✓ PHP read UserSession from Rust\n";
     echo "  Key: " . json_encode($session2->getKey()) . "\n";
     echo "  Timestamp: {$session2->timestamp}, IP: {$session2->ipAddress}\n";
-    
+
     assert($session2->userId === 100);
     assert($session2->sessionId === "abc123");
     assert($session2->timestamp === 1234567890);

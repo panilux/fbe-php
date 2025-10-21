@@ -1,7 +1,6 @@
 <?php
 /**
  * Cross-platform default values test: PHP ↔ Rust
- * HERSEY DAHA IYI BIR PANILUX ICIN! 🚀
  */
 
 declare(strict_types=1);
@@ -32,10 +31,10 @@ if (file_exists('/tmp/rust_config.bin')) {
     $data = file_get_contents('/tmp/rust_config.bin');
     $readBuffer = new ReadBuffer($data);
     $config2 = Config::deserialize($readBuffer);
-    
+
     echo "✓ PHP read Config from Rust\n";
     echo "  timeout={$config2->timeout}, retries={$config2->retries}, threshold={$config2->threshold}\n";
-    
+
     assert($config2->timeout === 30);
     assert($config2->retries === 3);
     assert(abs($config2->threshold - 0.95) < 0.001);
@@ -59,10 +58,10 @@ if (file_exists('/tmp/rust_settings.bin')) {
     $data = file_get_contents('/tmp/rust_settings.bin');
     $readBuffer = new ReadBuffer($data);
     $settings2 = Settings::deserialize($readBuffer);
-    
+
     echo "✓ PHP read Settings from Rust\n";
     echo "  enabled={$settings2->enabled}, name={$settings2->name}, path={$settings2->path}\n";
-    
+
     assert($settings2->enabled === true);
     assert($settings2->debug === false);
     assert($settings2->name === "DefaultName");
@@ -87,10 +86,10 @@ if (file_exists('/tmp/rust_order_defaults.bin')) {
     $data = file_get_contents('/tmp/rust_order_defaults.bin');
     $readBuffer = new ReadBuffer($data);
     $order2 = Order::deserialize($readBuffer);
-    
+
     echo "✓ PHP read Order from Rust\n";
     echo "  tp={$order2->tp}, sl={$order2->sl}\n";
-    
+
     assert($order2->tp === 10.0);
     assert($order2->sl === -10.0);
     echo "✓ Verification passed\n\n";

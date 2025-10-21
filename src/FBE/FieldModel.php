@@ -6,11 +6,9 @@ namespace FBE;
 
 /**
  * Fast Binary Encoding field model base class (PHP 8.4+)
- * 
+ *
  * Base class for all FBE field models, providing buffer access
  * and offset management with modern PHP 8.4 features.
- * 
- * HERSEY DAHA IYI BIR PANILUX ICIN! 🚀
  */
 abstract class FieldModel
 {
@@ -18,7 +16,7 @@ abstract class FieldModel
      * Buffer reference
      */
     protected WriteBuffer|ReadBuffer $buffer;
-    
+
     /**
      * Field offset in buffer
      */

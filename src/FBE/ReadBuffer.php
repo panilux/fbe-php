@@ -6,11 +6,9 @@ namespace FBE;
 
 /**
  * Fast Binary Encoding read buffer (PHP 8.4+)
- * 
+ *
  * Modern implementation using property hooks, readonly properties,
  * and other PHP 8.4 features while maintaining FBE binary compatibility.
- * 
- * HERSEY DAHA IYI BIR PANILUX ICIN! 🚀
  */
 final class ReadBuffer
 {
@@ -18,7 +16,7 @@ final class ReadBuffer
      * Buffer data (immutable after construction)
      */
     public private(set) string $buffer;
-    
+
     /**
      * Current offset for reading
      */
@@ -30,7 +28,7 @@ final class ReadBuffer
             $this->offset = $value;
         }
     }
-    
+
     /**
      * Buffer size
      */
@@ -150,11 +148,11 @@ final class ReadBuffer
     public function readString(int $offset): string
     {
         $size = $this->readUInt32($offset);
-        
+
         if ($size === 0) {
             return '';
         }
-        
+
         return substr($this->buffer, $this->offset + $offset + 4, $size);
     }
 
@@ -173,7 +171,7 @@ final class ReadBuffer
     {
         $binary = substr($this->buffer, $this->offset + $offset, 16);
         $hex = bin2hex($binary);
-        
+
         // Format as UUID string: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
         return sprintf(
             '%s-%s-%s-%s-%s',
@@ -191,11 +189,11 @@ final class ReadBuffer
     public function readBytes(int $offset): string
     {
         $size = $this->readUInt32($offset);
-        
+
         if ($size === 0) {
             return '';
         }
-        
+
         return substr($this->buffer, $this->offset + $offset + 4, $size);
     }
 
@@ -209,16 +207,16 @@ final class ReadBuffer
         $low = $this->readUInt32($offset);
         $mid = $this->readUInt32($offset + 4);
         $high = $this->readUInt32($offset + 8);
-        
+
         // Combine into single value (simplified for 64-bit range)
         $value = $low | ($mid << 32);
-        
+
         // Byte 14: Scale
         $scale = unpack('C', $this->buffer[$this->offset + $offset + 14])[1];
-        
+
         // Byte 15: Sign
         $negative = $this->buffer[$this->offset + $offset + 15] === "\x80";
-        
+
         return [
             'value' => $value,
             'scale' => $scale,
@@ -237,16 +235,16 @@ final class ReadBuffer
         if ($dataOffset === 0) {
             return [];
         }
-        
+
         // Read size
         $size = $this->readUInt32($dataOffset);
-        
+
         // Read elements
         $result = [];
         for ($i = 0; $i < $size; $i++) {
             $result[] = $this->readInt32($dataOffset + 4 + ($i * 4));
         }
-        
+
         return $result;
     }
 
@@ -275,10 +273,10 @@ final class ReadBuffer
         if ($dataOffset === 0) {
             return [];
         }
-        
+
         // Read size
         $size = $this->readUInt32($dataOffset);
-        
+
         // Read key-value pairs
         $result = [];
         for ($i = 0; $i < $size; $i++) {
@@ -286,7 +284,7 @@ final class ReadBuffer
             $value = $this->readInt32($dataOffset + 4 + ($i * 8) + 4);
             $result[$key] = $value;
         }
-        
+
         return $result;
     }
 
@@ -310,17 +308,17 @@ final class ReadBuffer
     {
         $pointer = $this->readUInt32($offset);
         if ($pointer == 0) return [];
-        
+
         $size = $this->readUInt32($pointer);
         $values = [];
         $currentOffset = $pointer + 4;
-        
+
         for ($i = 0; $i < $size; $i++) {
             $str = $this->readString($currentOffset);
             $values[] = $str;
             $currentOffset += 4 + strlen($str);
         }
-        
+
         return $values;
     }
 
@@ -331,13 +329,13 @@ final class ReadBuffer
     {
         $values = [];
         $currentOffset = $offset;
-        
+
         for ($i = 0; $i < $count; $i++) {
             $str = $this->readString($currentOffset);
             $values[] = $str;
             $currentOffset += 4 + strlen($str);
         }
-        
+
         return $values;
     }
 
@@ -398,7 +396,7 @@ final class ReadBuffer
         if (!$this->hasValue($offset)) {
             return null;
         }
-        
+
         $dataOffset = $this->readUInt32($offset + 1);
         return $this->readInt32($dataOffset);
     }
@@ -408,7 +406,7 @@ final class ReadBuffer
         if (!$this->hasValue($offset)) {
             return null;
         }
-        
+
         $dataOffset = $this->readUInt32($offset + 1);
         return $this->readString($dataOffset);
     }
@@ -418,7 +416,7 @@ final class ReadBuffer
         if (!$this->hasValue($offset)) {
             return null;
         }
-        
+
         $dataOffset = $this->readUInt32($offset + 1);
         return $this->readDouble($dataOffset);
     }

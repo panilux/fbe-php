@@ -1,7 +1,6 @@
 <?php
 /**
  * Test default values in PHP FBE
- * HERSEY DAHA IYI BIR PANILUX ICIN! 🚀
  */
 
 declare(strict_types=1);

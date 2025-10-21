@@ -6,10 +6,8 @@ namespace FBE\Test;
 
 /**
  * User data class (PHP 8.4+)
- * 
+ *
  * Immutable data class using readonly properties.
- * 
- * HERSEY DAHA IYI BIR PANILUX ICIN! 🚀
  */
 final readonly class User
 {

@@ -1,7 +1,6 @@
 <?php
 /**
  * Test Model/FinalModel in PHP FBE
- * HERSEY DAHA IYI BIR PANILUX ICIN! 🚀
  */
 
 declare(strict_types=1);

@@ -1,7 +1,6 @@
 <?php
 /**
  * Cross-platform inheritance test: PHP ↔ Rust
- * HERSEY DAHA IYI BIR PANILUX ICIN! 🚀
  */
 
 declare(strict_types=1);
@@ -38,12 +37,12 @@ if (file_exists('/tmp/rust_manager.bin')) {
     $data = file_get_contents('/tmp/rust_manager.bin');
     $readBuffer = new ReadBuffer($data);
     $manager2 = Manager::deserialize($readBuffer);
-    
+
     echo "✓ PHP read Manager from Rust\n";
     echo "  Name: {$manager2->name}, Age: {$manager2->age}, ";
     echo "Company: {$manager2->company}, Salary: {$manager2->salary}, ";
     echo "Team: {$manager2->teamSize}\n";
-    
+
     assert($manager2->name === "Charlie");
     assert($manager2->age === 40);
     assert($manager2->company === "Panilux");
@@ -73,11 +72,11 @@ if (file_exists('/tmp/rust_employee.bin')) {
     $data = file_get_contents('/tmp/rust_employee.bin');
     $readBuffer = new ReadBuffer($data);
     $employee2 = Employee::deserialize($readBuffer);
-    
+
     echo "✓ PHP read Employee from Rust\n";
     echo "  Name: {$employee2->name}, Age: {$employee2->age}, ";
     echo "Company: {$employee2->company}, Salary: {$employee2->salary}\n";
-    
+
     assert($employee2->name === "Bob");
     assert($employee2->age === 35);
     assert($employee2->company === "Panilux");
@@ -104,10 +103,10 @@ if (file_exists('/tmp/rust_person.bin')) {
     $data = file_get_contents('/tmp/rust_person.bin');
     $readBuffer = new ReadBuffer($data);
     $person2 = Person::deserialize($readBuffer);
-    
+
     echo "✓ PHP read Person from Rust\n";
     echo "  Name: {$person2->name}, Age: {$person2->age}\n";
-    
+
     assert($person2->name === "Alice");
     assert($person2->age === 30);
     echo "✓ Verification passed\n\n";

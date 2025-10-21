@@ -2,9 +2,8 @@
 <?php
 /**
  * Fast Binary Encoding compiler for PHP
- * 
+ *
  * Generates PHP code from .fbe schema files
- * HERSEY DAHA IYI BIR PANILUX ICIN! 🚀
  */
 
 declare(strict_types=1);
@@ -69,7 +68,7 @@ class FBEGenerator
     private function parseEnums(string $content): void
     {
         preg_match_all('/enum\s+(\w+)\s*:\s*(\w+)\s*\{([^}]+)\}/s', $content, $matches, PREG_SET_ORDER);
-        
+
         foreach ($matches as $match) {
             $name = $match[1];
             $baseType = $match[2];
@@ -105,7 +104,7 @@ class FBEGenerator
     private function parseFlags(string $content): void
     {
         preg_match_all('/flags\s+(\w+)\s*:\s*(\w+)\s*\{([^}]+)\}/s', $content, $matches, PREG_SET_ORDER);
-        
+
         foreach ($matches as $match) {
             $name = $match[1];
             $baseType = $match[2];
@@ -134,7 +133,7 @@ class FBEGenerator
     {
         // Match: struct Name(id)? (: BaseStruct)? { fields }
         preg_match_all('/struct\s+(\w+)(?:\([^)]+\))?(?:\s*:\s*([\w.]+))?\s*\{([^}]+)\}/s', $content, $matches, PREG_SET_ORDER);
-        
+
         foreach ($matches as $match) {
             $name = $match[1];
             $baseStruct = !empty($match[2]) ? $match[2] : null;
@@ -194,11 +193,11 @@ class FBEGenerator
 
         $code = "<?php\n\ndeclare(strict_types=1);\n\n";
         $code .= "enum $name: int\n{\n";
-        
+
         foreach ($enum['values'] as $key => $val) {
             $code .= "    case " . ucfirst($key) . " = $val;\n";
         }
-        
+
         $code .= "}\n";
 
         file_put_contents($fileName, $code);
@@ -211,12 +210,12 @@ class FBEGenerator
 
         $code = "<?php\n\ndeclare(strict_types=1);\n\n";
         $code .= "class $name\n{\n";
-        
+
         foreach ($flags['values'] as $key => $val) {
             $constName = strtoupper(preg_replace('/([a-z])([A-Z])/', '$1_$2', $key));
             $code .= "    public const " . strtoupper($key) . " = $val;\n";
         }
-        
+
         $code .= "}\n";
 
         file_put_contents($fileName, $code);
@@ -230,21 +229,21 @@ class FBEGenerator
         $code = "<?php\n\ndeclare(strict_types=1);\n\n";
         $code .= "use FBE\\WriteBuffer;\n";
         $code .= "use FBE\\ReadBuffer;\n\n";
-        
+
         // Add extends clause if base struct exists
         $extendsClause = '';
         if (!empty($struct['baseStruct'])) {
             $baseClass = $this->resolveBaseClass($struct['baseStruct']);
             $extendsClause = " extends $baseClass";
         }
-        
+
         $code .= "class $name$extendsClause\n{\n";
-        
+
         foreach ($struct['fields'] as $field) {
             $phpType = $this->mapFieldType($field);
             $code .= "    public $phpType \${$field['name']};\n";
         }
-        
+
         $code .= "\n    public function __construct()\n    {\n";
         if (!empty($struct['baseStruct'])) {
             $code .= "        parent::__construct();\n";
@@ -274,7 +273,7 @@ class FBEGenerator
         $code .= "        \$offset = \$obj->deserializeFields(\$buffer);\n";
         $code .= "        return \$obj;\n";
         $code .= "    }\n\n";
-        
+
         // DeserializeFields method (protected, for inheritance)
         $code .= "    protected function deserializeFields(ReadBuffer \$buffer): int\n    {\n";
         if (!empty($struct['baseStruct'])) {
@@ -287,7 +286,7 @@ class FBEGenerator
         }
         $code .= "        return \$offset;\n";
         $code .= "    }\n\n";
-        
+
         // Add getKey() method if struct has key fields
         $keyFields = array_filter($struct['fields'], fn($f) => $f['isKey'] ?? false);
         if (!empty($keyFields)) {
@@ -300,7 +299,7 @@ class FBEGenerator
             $code .= implode(", ", $keyNames);
             $code .= "];\n";
             $code .= "    }\n\n";
-            
+
             // Add equals() method
             $code .= "    /**\n";
             $code .= "     * Check equality based on key fields\n";
@@ -314,7 +313,7 @@ class FBEGenerator
             $code .= "        return true;\n";
             $code .= "    }\n";
         }
-        
+
         $code .= "}\n";
 
         file_put_contents($fileName, $code);
@@ -324,9 +323,9 @@ class FBEGenerator
     {
         $writeMethod = $this->getWriteMethod($field['fbeType']);
         $size = $this->getTypeSize($field['fbeType']);
-        $isPrimitive = in_array($field['fbeType'], ['bool', 'byte', 'int8', 'int16', 'int32', 'int64', 
+        $isPrimitive = in_array($field['fbeType'], ['bool', 'byte', 'int8', 'int16', 'int32', 'int64',
                                                       'uint8', 'uint16', 'uint32', 'uint64', 'float', 'double', 'string']);
-        
+
         if ($field['fbeType'] === 'string') {
             return "        \$buffer->{$writeMethod}(\$offset, \$this->{$field['name']});\n" .
                    "        \$offset += 4 + strlen(\$this->{$field['name']});\n";
@@ -344,11 +343,11 @@ class FBEGenerator
     {
         $readMethod = $this->getReadMethod($field['fbeType']);
         $size = $this->getTypeSize($field['fbeType']);
-        $isPrimitive = in_array($field['fbeType'], ['bool', 'byte', 'int8', 'int16', 'int32', 'int64', 
+        $isPrimitive = in_array($field['fbeType'], ['bool', 'byte', 'int8', 'int16', 'int32', 'int64',
                                                       'uint8', 'uint16', 'uint32', 'uint64', 'float', 'double', 'string']);
-        
+
         $var = $useThis ? '$this' : '$obj';
-        
+
         if ($field['fbeType'] === 'string') {
             return "        {$var}->{$field['name']} = \$buffer->{$readMethod}(\$offset);\n" .
                    "        \$offset += 4 + strlen({$var}->{$field['name']});\n";
@@ -427,7 +426,7 @@ class FBEGenerator
         } elseif ($field['isOptional']) {
             return "?$baseType";
         }
-        
+
         return $baseType;
     }
 
@@ -437,7 +436,7 @@ class FBEGenerator
         if (!empty($field['defaultValue'])) {
             return $this->convertDefaultValue($field['defaultValue'], $field['fbeType']);
         }
-        
+
         if ($field['isArray']) {
             return '[]';
         }
@@ -451,7 +450,7 @@ class FBEGenerator
             default => $field['fbeType'] . '::cases()[0]',  // First enum case
         };
     }
-    
+
     private function convertDefaultValue(string $value, string $fbeType): string
     {
         // Handle special keywords
@@ -461,12 +460,12 @@ class FBEGenerator
         if ($value === 'true' || $value === 'false') {
             return $value;
         }
-        
+
         // Handle string literals
         if (str_starts_with($value, '"') || str_starts_with($value, "'")) {
             return $value;
         }
-        
+
         // Handle numeric values
         if (is_numeric($value)) {
             // Add .0 for float/double if integer
@@ -475,12 +474,12 @@ class FBEGenerator
             }
             return $value;
         }
-        
+
         // Handle enum/flag values (e.g., OrderSide.buy)
         if (str_contains($value, '.')) {
             return $value;
         }
-        
+
         // Default: return as-is
         return $value;
     }

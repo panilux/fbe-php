@@ -6,10 +6,8 @@ namespace FBE;
 
 /**
  * Fast Binary Encoding primitive field models (PHP 8.4+)
- * 
+ *
  * All primitive type field models with modern PHP 8.4 features.
- * 
- * HERSEY DAHA IYI BIR PANILUX ICIN! 🚀
  */
 
 // ============================================================================
