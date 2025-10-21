@@ -185,5 +185,78 @@ final class ReadBuffer
             'negative' => $negative,
         ];
     }
+
+    /**
+     * Read vector of int32 values
+     * Format: 4-byte offset pointer → (4-byte size + elements)
+     */
+    public function readVectorInt32(int $offset): array
+    {
+        // Read pointer
+        $dataOffset = $this->readUInt32($offset);
+        if ($dataOffset === 0) {
+            return [];
+        }
+        
+        // Read size
+        $size = $this->readUInt32($dataOffset);
+        
+        // Read elements
+        $result = [];
+        for ($i = 0; $i < $size; $i++) {
+            $result[] = $this->readInt32($dataOffset + 4 + ($i * 4));
+        }
+        
+        return $result;
+    }
+
+    /**
+     * Read fixed-size array of int32 values (inline, no pointer)
+     * Format: N × 4 bytes (elements only)
+     */
+    public function readArrayInt32(int $offset, int $size): array
+    {
+        $result = [];
+        for ($i = 0; $i < $size; $i++) {
+            $result[] = $this->readInt32($offset + ($i * 4));
+        }
+        return $result;
+    }
+
+    /**
+     * Read map of int32 key-value pairs
+     * Format: 4-byte offset pointer → (4-byte size + key-value pairs)
+     * @return array Associative array of key => value pairs
+     */
+    public function readMapInt32(int $offset): array
+    {
+        // Read pointer
+        $dataOffset = $this->readUInt32($offset);
+        if ($dataOffset === 0) {
+            return [];
+        }
+        
+        // Read size
+        $size = $this->readUInt32($dataOffset);
+        
+        // Read key-value pairs
+        $result = [];
+        for ($i = 0; $i < $size; $i++) {
+            $key = $this->readInt32($dataOffset + 4 + ($i * 8));
+            $value = $this->readInt32($dataOffset + 4 + ($i * 8) + 4);
+            $result[$key] = $value;
+        }
+        
+        return $result;
+    }
+
+    /**
+     * Read set of int32 values (same format as vector)
+     * Format: 4-byte offset pointer → (4-byte size + elements)
+     */
+    public function readSetInt32(int $offset): array
+    {
+        return $this->readVectorInt32($offset);
+    }
 }
 
