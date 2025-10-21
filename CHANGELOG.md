@@ -188,3 +188,19 @@ All notable changes to this project will be documented in this file.
 - 1 byte: has_value flag (0=null, 1=has value)
 - 4 bytes: pointer to data
 - At pointer: actual value
+
+## [0.1.3] - 2025-10-21
+
+### Added
+- Nested struct support with FBE-compliant FieldModel pattern
+- Pointer-based FieldModelString (FBE spec)
+- Address and UserWithAddress test structs
+- Comprehensive FBE ground truth validation
+
+### Changed
+- FieldModelString now uses pointer-based format (breaking change)
+
+### Validated
+- PHP → FBE Python: PASS
+- Rust → FBE Python: PASS
+- PHP ↔ Rust: Binary identical
