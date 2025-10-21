@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.6] - 2025-10-21
+
+### Added
+- **FieldModel Pattern:** Base class for type-safe field models
+- **FieldModelInt32:** Int32 field model implementation
+- **FieldModelString:** String field model implementation
+- **Struct-based Serialization:** UserModel example with modern PHP 8.4 patterns
+- **Readonly Data Classes:** Immutable User data class
+
+### Improved
+- Type-safe struct serialization/deserialization
+- Cross-platform struct compatibility (PHP ↔ Rust)
+- Modern PHP 8.4 readonly properties for data classes
+
+### Verified
+- ✅ Struct serialization: User(id, name, side)
+- ✅ PHP → Rust: Binary identical
+- ✅ Rust → PHP: Binary identical
+
 ## [0.0.5] - 2025-10-21
 
 ### Changed

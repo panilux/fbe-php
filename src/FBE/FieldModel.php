@@ -5,33 +5,73 @@ declare(strict_types=1);
 namespace FBE;
 
 /**
- * Base interface for FBE field models
+ * Fast Binary Encoding field model base class (PHP 8.4+)
+ * 
+ * Base class for all FBE field models, providing buffer access
+ * and offset management with modern PHP 8.4 features.
+ * 
+ * HERSEY DAHA IYI BIR PANILUX ICIN! 🚀
  */
-interface FieldModel
+abstract class FieldModel
 {
     /**
-     * Get FBE type ID
+     * Buffer reference
      */
-    public function fbeType(): int;
+    protected WriteBuffer|ReadBuffer $buffer;
+    
+    /**
+     * Field offset in buffer
+     */
+    public private(set) int $offset {
+        set {
+            if ($value < 0) {
+                throw new \InvalidArgumentException("Offset cannot be negative");
+            }
+            $this->offset = $value;
+        }
+    }
+
+    public function __construct(WriteBuffer|ReadBuffer $buffer, int $offset = 0)
+    {
+        $this->buffer = $buffer;
+        $this->offset = $offset;
+    }
 
     /**
-     * Get FBE offset
+     * Get field size in bytes
      */
-    public function fbeOffset(): int;
+    abstract public function size(): int;
 
     /**
-     * Get FBE size (fixed size for primitives)
+     * Get extra size (for dynamic types like strings, vectors)
      */
-    public function fbeSize(): int;
+    public function extra(): int
+    {
+        return 0;
+    }
 
     /**
-     * Get FBE extra size (for variable-length types)
+     * Shift offset forward
      */
-    public function fbeExtra(): int;
+    public function shift(int $offset): void
+    {
+        $this->offset += $offset;
+    }
 
     /**
-     * Verify field
+     * Shift offset backward
      */
-    public function verify(): bool;
+    public function unshift(int $offset): void
+    {
+        $this->offset -= $offset;
+    }
+
+    /**
+     * Verify field value
+     */
+    public function verify(): bool
+    {
+        return true;
+    }
 }
 
