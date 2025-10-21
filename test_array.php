@@ -15,7 +15,7 @@ $writer->allocate(12); // 3 × 4 bytes
 $values = [10, 20, 30];
 $writer->writeArrayInt32(0, $values);
 
-echo "   Buffer size: " . $writer->size() . "\n";
+echo "   Buffer size: " . $writer->size . "\n";
 echo "   Binary: " . bin2hex($writer->data()) . "\n";
 
 $reader = new ReadBuffer($writer->data());

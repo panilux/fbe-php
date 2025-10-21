@@ -16,7 +16,7 @@ $writer->allocate(4);
 $vectorValues = [10, 20, 30];
 $writer->writeVectorInt32(0, $vectorValues);
 
-echo "   Buffer size after vector: " . $writer->size() . "\n";
+echo "   Buffer size after vector: " . $writer->size . "\n";
 echo "   Binary: " . bin2hex($writer->data()) . "\n";
 
 $reader = new ReadBuffer($writer->data());
@@ -32,7 +32,7 @@ $writer2->allocate(12);
 $arrayValues = [40, 50, 60];
 $writer2->writeArrayInt32(0, $arrayValues);
 
-echo "   Buffer size: " . $writer2->size() . "\n";
+echo "   Buffer size: " . $writer2->size . "\n";
 echo "   Binary: " . bin2hex($writer2->data()) . "\n";
 
 $reader2 = new ReadBuffer($writer2->data());
@@ -48,7 +48,7 @@ $writer3->allocate(4);
 $mapEntries = [1 => 100, 2 => 200];
 $writer3->writeMapInt32(0, $mapEntries);
 
-echo "   Buffer size: " . $writer3->size() . "\n";
+echo "   Buffer size: " . $writer3->size . "\n";
 echo "   Binary: " . bin2hex($writer3->data()) . "\n";
 
 $reader3 = new ReadBuffer($writer3->data());
@@ -68,7 +68,7 @@ $writer4->allocate(4);
 $setValues = [70, 80, 90];
 $writer4->writeSetInt32(0, $setValues);
 
-echo "   Buffer size: " . $writer4->size() . "\n";
+echo "   Buffer size: " . $writer4->size . "\n";
 echo "   Binary: " . bin2hex($writer4->data()) . "\n";
 
 $reader4 = new ReadBuffer($writer4->data());

@@ -8,13 +8,13 @@ echo "Testing WriteBuffer fix...\n\n";
 
 // Test 1: Basic size tracking
 $buffer = new WriteBuffer();
-echo "Initial size: " . $buffer->size() . "\n";
+echo "Initial size: " . $buffer->size . "\n";
 
 $buffer->writeInt32(0, 42);
-echo "After writeInt32(0, 42): size = " . $buffer->size() . " (expected: 4)\n";
+echo "After writeInt32(0, 42): size = " . $buffer->size . " (expected: 4)\n";
 
 $buffer->writeString(4, "Hello");
-echo "After writeString(4, 'Hello'): size = " . $buffer->size() . " (expected: 13)\n";
+echo "After writeString(4, 'Hello'): size = " . $buffer->size . " (expected: 13)\n";
 // 4 bytes (int32) + 4 bytes (string length) + 5 bytes (string data) = 13
 
 // Test 2: Verify binary data
@@ -35,7 +35,7 @@ $buffer2->writeBool(0, true);
 $buffer2->writeInt16(1, 1000);
 $buffer2->writeDouble(3, 3.14159);
 
-echo "\nBuffer2 size: " . $buffer2->size() . " (expected: 11)\n";
+echo "\nBuffer2 size: " . $buffer2->size . " (expected: 11)\n";
 // 1 (bool) + 2 (int16) + 8 (double) = 11
 
 echo "Buffer2 hex: " . bin2hex($buffer2->data()) . "\n";

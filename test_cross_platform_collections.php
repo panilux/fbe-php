@@ -31,7 +31,7 @@ $setValues = [70, 80, 90];
 $writer->writeSetInt32(8, $setValues);
 
 file_put_contents('/tmp/php_collections.bin', $writer->data());
-echo "PHP wrote " . $writer->size() . " bytes\n";
+echo "PHP wrote " . $writer->size . " bytes\n";
 
 // Read back
 $reader = new ReadBuffer($writer->data());

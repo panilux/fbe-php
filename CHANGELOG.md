@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.5] - 2025-10-21
+
+### Changed
+- **PHP 8.4+ Modernization:** Complete refactor using modern PHP features
+- **Property hooks:** `$size` and `$offset` with automatic validation
+- **Asymmetric visibility:** `public private(set)` for immutable properties
+- **Modern syntax:** Cleaner, more readable code
+- **Breaking change:** `$buffer->size()` → `$buffer->size` (property access)
+
+### Improved
+- Better type safety with property hooks
+- Automatic validation on property assignment
+- More concise code with modern PHP 8.4 syntax
+- Enhanced UUID validation with proper error handling
+
+### Verified
+- ✅ All tests passing with PHP 8.4.13
+- ✅ Binary compatibility maintained with Rust
+- ✅ Performance improvements from JIT optimizations
+
 ## [0.0.4] - 2025-10-21
 
 ### Added

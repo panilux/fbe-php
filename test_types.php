@@ -22,7 +22,7 @@ echo "   ✓ Timestamp: $timestamp\n";
 // Test 2: UUID
 echo "\n2. Testing UUID...\n";
 $buffer2 = new WriteBuffer();
-$uuid = "\x12\x3e\x45\x67\xe8\x9b\x12\xd3\xa4\x56\x42\x66\x55\x44\x00\x00";
+$uuid = "123e4567-e89b-12d3-a456-426655440000";
 $buffer2->writeUuid(0, $uuid);
 
 $reader2 = new ReadBuffer($buffer2->data());
@@ -46,7 +46,7 @@ echo "   ✓ Bytes hex: " . bin2hex($bytes) . "\n";
 echo "\n4. Testing decimal (positive)...\n";
 $buffer4 = new WriteBuffer();
 // 123456.123456 with scale 6 = 123456123456 as unscaled value
-$value = str_pad(pack('P', 123456123456), 12, "\x00");
+$value = 123456123456;
 $scale = 6;
 $negative = false;
 $buffer4->writeDecimal(0, $value, $scale, $negative);
@@ -61,9 +61,9 @@ echo "   ✓ Decimal negative: " . ($decimal['negative'] ? 'true' : 'false') . "
 // Test 5: Decimal (negative)
 echo "\n5. Testing decimal (negative)...\n";
 $buffer5 = new WriteBuffer();
-// -999.99 with scale 2 = 99999 as unscaled value
-$value2 = str_pad(pack('P', 99999), 12, "\x00");
-$scale2 = 2;
+// -987654.987654 with scale 3
+$value2 = 987654987654;
+$scale2 = 3;
 $negative2 = true;
 $buffer5->writeDecimal(0, $value2, $scale2, $negative2);
 

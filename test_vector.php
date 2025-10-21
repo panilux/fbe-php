@@ -14,7 +14,7 @@ $writer = new WriteBuffer();
 $values = [10, 20, 30, 40, 50];
 $writer->writeVectorInt32(0, $values);
 
-echo "   Buffer size: " . $writer->size() . "\n";
+echo "   Buffer size: " . $writer->size . "\n";
 echo "   Binary: " . bin2hex($writer->data()) . "\n";
 
 $reader = new ReadBuffer($writer->data());

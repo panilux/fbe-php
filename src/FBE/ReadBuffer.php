@@ -5,179 +5,219 @@ declare(strict_types=1);
 namespace FBE;
 
 /**
- * Fast Binary Encoding read buffer
+ * Fast Binary Encoding read buffer (PHP 8.4+)
+ * 
+ * Modern implementation using property hooks, readonly properties,
+ * and other PHP 8.4 features while maintaining FBE binary compatibility.
+ * 
+ * HERSEY DAHA IYI BIR PANILUX ICIN! 🚀
  */
 final class ReadBuffer
 {
-    private string $buffer;
-    private int $size;
-    private int $offset;
-
-    public function __construct(?string $buffer = null)
-    {
-        if ($buffer !== null) {
-            $this->buffer = $buffer;
-            $this->size = strlen($buffer);
-            $this->offset = 0;
-        } else {
-            $this->buffer = '';
-            $this->size = 0;
-            $this->offset = 0;
+    /**
+     * Buffer data (immutable after construction)
+     */
+    public private(set) string $buffer;
+    
+    /**
+     * Current offset for reading
+     */
+    public private(set) int $offset {
+        set {
+            if ($value < 0) {
+                throw new \InvalidArgumentException("Offset cannot be negative");
+            }
+            $this->offset = $value;
+        }
+    }
+    
+    /**
+     * Buffer size
+     */
+    public private(set) int $size {
+        set {
+            if ($value < 0) {
+                throw new \InvalidArgumentException("Size cannot be negative");
+            }
+            $this->size = $value;
         }
     }
 
-    public function data(): string
+    public function __construct(string $buffer = '', int $offset = 0, int $size = 0)
     {
-        return $this->buffer;
-    }
-
-    public function capacity(): int
-    {
-        return $this->size;
-    }
-
-    public function size(): int
-    {
-        return $this->size;
-    }
-
-    public function offset(): int
-    {
-        return $this->offset;
-    }
-
-    public function attachBuffer(string $buffer, int $offset = 0, ?int $size = null): void
-    {
-        if ($size === null) {
-            $size = strlen($buffer);
-        }
-
-        assert($size > 0, 'Invalid size!');
-        assert($offset <= $size, 'Invalid offset!');
-
         $this->buffer = $buffer;
-        $this->size = $size;
         $this->offset = $offset;
+        $this->size = $size === 0 ? strlen($buffer) : $size;
     }
 
-    public function reset(): void
+    public function isEmpty(): bool
     {
-        $this->buffer = '';
-        $this->size = 0;
-        $this->offset = 0;
+        return $this->size === 0;
     }
 
-    public function shift(int $offset): void
-    {
-        $this->offset += $offset;
-    }
-
-    public function unshift(int $offset): void
-    {
-        $this->offset -= $offset;
-    }
-
-    // Read primitive types
+    /**
+     * Read bool value
+     */
     public function readBool(int $offset): bool
     {
-        return ord($this->buffer[$this->offset + $offset]) !== 0;
+        return $this->buffer[$this->offset + $offset] !== "\x00";
     }
 
+    /**
+     * Read int8 value
+     */
     public function readInt8(int $offset): int
     {
-        $value = ord($this->buffer[$this->offset + $offset]);
-        return $value > 127 ? $value - 256 : $value;
+        return unpack('c', $this->buffer[$this->offset + $offset])[1];
     }
 
+    /**
+     * Read uint8 value
+     */
     public function readUInt8(int $offset): int
     {
-        return ord($this->buffer[$this->offset + $offset]);
+        return unpack('C', $this->buffer[$this->offset + $offset])[1];
     }
 
+    /**
+     * Read int16 value (little-endian)
+     */
     public function readInt16(int $offset): int
     {
-        $data = substr($this->buffer, $this->offset + $offset, 2);
-        return unpack('s', $data)[1];
+        return unpack('s', substr($this->buffer, $this->offset + $offset, 2))[1];
     }
 
+    /**
+     * Read uint16 value (little-endian)
+     */
     public function readUInt16(int $offset): int
     {
-        $data = substr($this->buffer, $this->offset + $offset, 2);
-        return unpack('S', $data)[1];
+        return unpack('v', substr($this->buffer, $this->offset + $offset, 2))[1];
     }
 
+    /**
+     * Read int32 value (little-endian)
+     */
     public function readInt32(int $offset): int
     {
-        $data = substr($this->buffer, $this->offset + $offset, 4);
-        return unpack('l', $data)[1];
+        return unpack('l', substr($this->buffer, $this->offset + $offset, 4))[1];
     }
 
+    /**
+     * Read uint32 value (little-endian)
+     */
     public function readUInt32(int $offset): int
     {
-        $data = substr($this->buffer, $this->offset + $offset, 4);
-        return unpack('L', $data)[1];
+        return unpack('V', substr($this->buffer, $this->offset + $offset, 4))[1];
     }
 
+    /**
+     * Read int64 value (little-endian)
+     */
     public function readInt64(int $offset): int
     {
-        $data = substr($this->buffer, $this->offset + $offset, 8);
-        return unpack('q', $data)[1];
+        return unpack('q', substr($this->buffer, $this->offset + $offset, 8))[1];
     }
 
+    /**
+     * Read uint64 value (little-endian)
+     */
     public function readUInt64(int $offset): int
     {
-        $data = substr($this->buffer, $this->offset + $offset, 8);
-        return unpack('Q', $data)[1];
+        return unpack('P', substr($this->buffer, $this->offset + $offset, 8))[1];
     }
 
+    /**
+     * Read float value (little-endian)
+     */
     public function readFloat(int $offset): float
     {
-        $data = substr($this->buffer, $this->offset + $offset, 4);
-        return unpack('f', $data)[1];
+        return unpack('f', substr($this->buffer, $this->offset + $offset, 4))[1];
     }
 
+    /**
+     * Read double value (little-endian)
+     */
     public function readDouble(int $offset): float
     {
-        $data = substr($this->buffer, $this->offset + $offset, 8);
-        return unpack('d', $data)[1];
+        return unpack('d', substr($this->buffer, $this->offset + $offset, 8))[1];
     }
 
+    /**
+     * Read string value (size-prefixed)
+     * Format: 4-byte size + UTF-8 bytes
+     */
     public function readString(int $offset): string
     {
-        $len = $this->readInt32($offset);
-        return substr($this->buffer, $this->offset + $offset + 4, $len);
+        $size = $this->readUInt32($offset);
+        
+        if ($size === 0) {
+            return '';
+        }
+        
+        return substr($this->buffer, $this->offset + $offset + 4, $size);
     }
 
+    /**
+     * Read timestamp value (uint64, nanoseconds since epoch)
+     */
     public function readTimestamp(int $offset): int
     {
         return $this->readUInt64($offset);
     }
 
+    /**
+     * Read UUID value (16 bytes)
+     */
     public function readUuid(int $offset): string
     {
-        return substr($this->buffer, $this->offset + $offset, 16);
-    }
-
-    public function readBytes(int $offset): string
-    {
-        $len = $this->readInt32($offset);
-        return substr($this->buffer, $this->offset + $offset + 4, $len);
+        $binary = substr($this->buffer, $this->offset + $offset, 16);
+        $hex = bin2hex($binary);
+        
+        // Format as UUID string: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        return sprintf(
+            '%s-%s-%s-%s-%s',
+            substr($hex, 0, 8),
+            substr($hex, 8, 4),
+            substr($hex, 12, 4),
+            substr($hex, 16, 4),
+            substr($hex, 20, 12)
+        );
     }
 
     /**
-     * Read decimal value
-     * Returns array with keys: 'value' (string, 12 bytes), 'scale' (int), 'negative' (bool)
+     * Read bytes value (size-prefixed binary data)
+     */
+    public function readBytes(int $offset): string
+    {
+        $size = $this->readUInt32($offset);
+        
+        if ($size === 0) {
+            return '';
+        }
+        
+        return substr($this->buffer, $this->offset + $offset + 4, $size);
+    }
+
+    /**
+     * Read decimal value (.NET Decimal format, 16 bytes)
+     * Returns array with 'value', 'scale', 'negative' keys
      */
     public function readDecimal(int $offset): array
     {
-        // Read 96-bit unscaled value from bytes 0-11
-        $value = substr($this->buffer, $this->offset + $offset, 12);
+        // Bytes 0-11: Unscaled value (96-bit, little-endian)
+        $low = $this->readUInt32($offset);
+        $mid = $this->readUInt32($offset + 4);
+        $high = $this->readUInt32($offset + 8);
         
-        // Read scale from byte 14
-        $scale = ord($this->buffer[$this->offset + $offset + 14]);
+        // Combine into single value (simplified for 64-bit range)
+        $value = $low | ($mid << 32);
         
-        // Read sign from byte 15
-        $negative = (ord($this->buffer[$this->offset + $offset + 15]) & 0x80) !== 0;
+        // Byte 14: Scale
+        $scale = unpack('C', $this->buffer[$this->offset + $offset + 14])[1];
+        
+        // Byte 15: Sign
+        $negative = $this->buffer[$this->offset + $offset + 15] === "\x80";
         
         return [
             'value' => $value,

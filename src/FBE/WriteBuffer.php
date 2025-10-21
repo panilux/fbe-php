@@ -5,16 +5,41 @@ declare(strict_types=1);
 namespace FBE;
 
 /**
- * Fast Binary Encoding write buffer
+ * Fast Binary Encoding write buffer (PHP 8.4+)
  * 
- * Based on original FBE Python implementation with exact API compatibility
+ * Modern implementation using property hooks, asymmetric visibility,
+ * and other PHP 8.4 features while maintaining FBE binary compatibility.
+ * 
  * HERSEY DAHA IYI BIR PANILUX ICIN! 🚀
  */
 final class WriteBuffer
 {
     private string $buffer;
-    private int $size;
-    private int $offset;
+    
+    /**
+     * Current size of valid data in buffer
+     * Uses property hooks for automatic validation
+     */
+    public private(set) int $size {
+        set {
+            if ($value < 0) {
+                throw new \InvalidArgumentException("Size cannot be negative");
+            }
+            $this->size = $value;
+        }
+    }
+    
+    /**
+     * Current offset for writing
+     */
+    public private(set) int $offset {
+        set {
+            if ($value < 0) {
+                throw new \InvalidArgumentException("Offset cannot be negative");
+            }
+            $this->offset = $value;
+        }
+    }
 
     public function __construct(int $capacity = 0)
     {
@@ -38,142 +63,89 @@ final class WriteBuffer
         return strlen($this->buffer);
     }
 
-    public function size(): int
-    {
-        return $this->size;
-    }
-
-    public function offset(): int
-    {
-        return $this->offset;
-    }
-
-    public function attachNew(): void
-    {
-        $this->buffer = '';
-        $this->size = 0;
-        $this->offset = 0;
-    }
-
-    public function attachCapacity(int $capacity): void
-    {
-        $this->buffer = str_repeat("\0", $capacity);
-        $this->size = 0;
-        $this->offset = 0;
-    }
-
-    public function attachBuffer(string $buffer, int $offset = 0, ?int $size = null): void
-    {
-        if ($size === null) {
-            $size = strlen($buffer);
-        }
-
-        assert($size > 0, 'Invalid size!');
-        assert($offset <= $size, 'Invalid offset!');
-
-        $this->buffer = $buffer;
-        $this->size = $size;
-        $this->offset = $offset;
-    }
-
-    public function allocate(int $size): int
-    {
-        assert($size >= 0, 'Invalid allocation size!');
-
-        $offset = $this->size;
-        $total = $this->size + $size;
-
-        if ($total > strlen($this->buffer)) {
-            $newCapacity = max($total, strlen($this->buffer) * 2);
-            $this->buffer .= str_repeat("\0", $newCapacity - strlen($this->buffer));
-        }
-
-        $this->size = $total;
-        return $offset;
-    }
-
-    public function remove(int $offset, int $size): void
-    {
-        assert($offset + $size <= strlen($this->buffer), 'Invalid offset & size!');
-
-        $this->buffer = substr($this->buffer, 0, $offset) . substr($this->buffer, $offset + $size);
-        $this->size -= $size;
-
-        if ($this->offset >= $offset + $size) {
-            $this->offset -= $size;
-        } elseif ($this->offset >= $offset) {
-            $this->offset -= ($this->offset - $offset);
-            if ($this->offset > $this->size) {
-                $this->offset = $this->size;
-            }
-        }
-    }
-
+    /**
+     * Reserve space in buffer
+     */
     public function reserve(int $capacity): void
     {
-        assert($capacity >= 0, 'Invalid reserve capacity!');
-
-        if ($capacity > strlen($this->buffer)) {
-            $newCapacity = max($capacity, strlen($this->buffer) * 2);
-            $this->buffer .= str_repeat("\0", $newCapacity - strlen($this->buffer));
+        if ($capacity <= $this->capacity()) {
+            return;
         }
+        
+        $this->buffer .= str_repeat("\0", $capacity - $this->capacity());
     }
 
-    public function resize(int $size): void
-    {
-        $this->reserve($size);
-        $this->size = $size;
-        if ($this->offset > $this->size) {
-            $this->offset = $this->size;
-        }
-    }
-
+    /**
+     * Reset buffer to initial state
+     */
     public function reset(): void
     {
         $this->size = 0;
         $this->offset = 0;
     }
 
-    public function shift(int $offset): void
+    /**
+     * Allocate space and return offset
+     */
+    public function allocate(int $size): int
     {
-        $this->offset += $offset;
+        $result = $this->offset + $this->size;
+        $this->size += $size;
+        
+        // Grow buffer if needed
+        if ($result + $size > $this->capacity()) {
+            $this->reserve(max($result + $size, $this->capacity() * 2));
+        }
+        
+        return $result;
     }
 
-    public function unshift(int $offset): void
-    {
-        $this->offset -= $offset;
-    }
-
-    // Write primitive types - ensure buffer has space before writing
+    /**
+     * Ensure space is available at offset (helper for write methods)
+     */
     private function ensureSpace(int $offset, int $size): void
     {
-        $required = $this->offset + $offset + $size;
-        if ($required > strlen($this->buffer)) {
-            $newCapacity = max($required, strlen($this->buffer) * 2, 1024);
-            $this->buffer .= str_repeat("\0", $newCapacity - strlen($this->buffer));
+        $required = $offset + $size;
+        
+        if ($required > $this->size) {
+            $this->size = $required;
         }
-        // Update size to track written data
-        $this->size = max($this->size, $required);
+        
+        if ($required > $this->capacity()) {
+            $this->reserve(max($required, $this->capacity() * 2));
+        }
     }
 
+    /**
+     * Write bool value
+     */
     public function writeBool(int $offset, bool $value): void
     {
         $this->ensureSpace($offset, 1);
         $this->buffer[$this->offset + $offset] = $value ? "\x01" : "\x00";
     }
 
+    /**
+     * Write int8 value
+     */
     public function writeInt8(int $offset, int $value): void
     {
         $this->ensureSpace($offset, 1);
-        $this->buffer[$this->offset + $offset] = chr($value & 0xFF);
+        $this->buffer[$this->offset + $offset] = pack('c', $value);
     }
 
+    /**
+     * Write uint8 value
+     */
     public function writeUInt8(int $offset, int $value): void
     {
         $this->ensureSpace($offset, 1);
-        $this->buffer[$this->offset + $offset] = chr($value & 0xFF);
+        $this->buffer[$this->offset + $offset] = pack('C', $value);
     }
 
+    /**
+     * Write int16 value (little-endian)
+     */
     public function writeInt16(int $offset, int $value): void
     {
         $this->ensureSpace($offset, 2);
@@ -183,15 +155,21 @@ final class WriteBuffer
         }
     }
 
+    /**
+     * Write uint16 value (little-endian)
+     */
     public function writeUInt16(int $offset, int $value): void
     {
         $this->ensureSpace($offset, 2);
-        $packed = pack('S', $value);
+        $packed = pack('v', $value);
         for ($i = 0; $i < 2; $i++) {
             $this->buffer[$this->offset + $offset + $i] = $packed[$i];
         }
     }
 
+    /**
+     * Write int32 value (little-endian)
+     */
     public function writeInt32(int $offset, int $value): void
     {
         $this->ensureSpace($offset, 4);
@@ -201,15 +179,21 @@ final class WriteBuffer
         }
     }
 
+    /**
+     * Write uint32 value (little-endian)
+     */
     public function writeUInt32(int $offset, int $value): void
     {
         $this->ensureSpace($offset, 4);
-        $packed = pack('L', $value);
+        $packed = pack('V', $value);
         for ($i = 0; $i < 4; $i++) {
             $this->buffer[$this->offset + $offset + $i] = $packed[$i];
         }
     }
 
+    /**
+     * Write int64 value (little-endian)
+     */
     public function writeInt64(int $offset, int $value): void
     {
         $this->ensureSpace($offset, 8);
@@ -219,15 +203,21 @@ final class WriteBuffer
         }
     }
 
+    /**
+     * Write uint64 value (little-endian)
+     */
     public function writeUInt64(int $offset, int $value): void
     {
         $this->ensureSpace($offset, 8);
-        $packed = pack('Q', $value);
+        $packed = pack('P', $value);
         for ($i = 0; $i < 8; $i++) {
             $this->buffer[$this->offset + $offset + $i] = $packed[$i];
         }
     }
 
+    /**
+     * Write float value (little-endian)
+     */
     public function writeFloat(int $offset, float $value): void
     {
         $this->ensureSpace($offset, 4);
@@ -237,6 +227,9 @@ final class WriteBuffer
         }
     }
 
+    /**
+     * Write double value (little-endian)
+     */
     public function writeDouble(int $offset, float $value): void
     {
         $this->ensureSpace($offset, 8);
@@ -246,71 +239,96 @@ final class WriteBuffer
         }
     }
 
+    /**
+     * Write string value (size-prefixed)
+     * Format: 4-byte size + UTF-8 bytes
+     */
     public function writeString(int $offset, string $value): void
     {
-        $len = strlen($value);
-        $this->ensureSpace($offset, 4 + $len);
+        $bytes = $value;
+        $size = strlen($bytes);
         
-        // Write length as int32
-        $packed = pack('l', $len);
-        for ($i = 0; $i < 4; $i++) {
-            $this->buffer[$this->offset + $offset + $i] = $packed[$i];
-        }
+        $this->ensureSpace($offset, 4 + $size);
         
-        // Write string data
-        for ($i = 0; $i < $len; $i++) {
-            $this->buffer[$this->offset + $offset + 4 + $i] = $value[$i];
+        // Write size
+        $this->writeUInt32($offset, $size);
+        
+        // Write bytes
+        for ($i = 0; $i < $size; $i++) {
+            $this->buffer[$this->offset + $offset + 4 + $i] = $bytes[$i];
         }
     }
 
-    public function writeTimestamp(int $offset, int $value): void
+    /**
+     * Write timestamp value (uint64, nanoseconds since epoch)
+     */
+    public function writeTimestamp(int $offset, int $nanoseconds): void
     {
-        $this->writeUInt64($offset, $value);
+        $this->writeUInt64($offset, $nanoseconds);
     }
 
-    public function writeUuid(int $offset, string $value): void
+    /**
+     * Write UUID value (16 bytes)
+     */
+    public function writeUuid(int $offset, string $uuid): void
     {
         $this->ensureSpace($offset, 16);
-        // UUID as 16 bytes
+        
+        // Parse UUID string to binary
+        $hex = str_replace('-', '', $uuid);
+        $binary = hex2bin($hex);
+        
+        if ($binary === false || strlen($binary) !== 16) {
+            throw new \InvalidArgumentException("Invalid UUID format: {$uuid}");
+        }
+        
         for ($i = 0; $i < 16; $i++) {
-            $this->buffer[$this->offset + $offset + $i] = $value[$i];
+            $this->buffer[$this->offset + $offset + $i] = $binary[$i];
         }
     }
 
-    public function writeBytes(int $offset, string $value): void
+    /**
+     * Write bytes value (size-prefixed binary data)
+     */
+    public function writeBytes(int $offset, string $data): void
     {
-        $len = strlen($value);
-        $this->ensureSpace($offset, 4 + $len);
+        $size = strlen($data);
         
-        // Write length as int32
-        $packed = pack('l', $len);
-        for ($i = 0; $i < 4; $i++) {
-            $this->buffer[$this->offset + $offset + $i] = $packed[$i];
-        }
+        $this->ensureSpace($offset, 4 + $size);
         
-        // Write binary data
-        for ($i = 0; $i < $len; $i++) {
-            $this->buffer[$this->offset + $offset + 4 + $i] = $value[$i];
+        // Write size
+        $this->writeUInt32($offset, $size);
+        
+        // Write data
+        for ($i = 0; $i < $size; $i++) {
+            $this->buffer[$this->offset + $offset + 4 + $i] = $data[$i];
         }
     }
 
-    public function writeDecimal(int $offset, string $value, int $scale, bool $negative): void
+    /**
+     * Write decimal value (.NET Decimal format, 16 bytes)
+     */
+    public function writeDecimal(int $offset, int $value, int $scale, bool $negative): void
     {
         $this->ensureSpace($offset, 16);
         
-        // Write unscaled value to bytes 0-11 (96-bit little-endian)
-        for ($i = 0; $i < 12; $i++) {
-            $this->buffer[$this->offset + $offset + $i] = $value[$i] ?? "\x00";
-        }
+        // Bytes 0-11: Unscaled value (96-bit, little-endian)
+        $low = $value & 0xFFFFFFFF;
+        $mid = ($value >> 32) & 0xFFFFFFFF;
+        $high = ($value >> 64) & 0xFFFFFFFF;
         
-        // Bytes 12-13 are unused (zero)
+        $this->writeUInt32($offset, $low);
+        $this->writeUInt32($offset + 4, $mid);
+        $this->writeUInt32($offset + 8, $high);
+        
+        // Bytes 12-13: Unused (0)
         $this->buffer[$this->offset + $offset + 12] = "\x00";
         $this->buffer[$this->offset + $offset + 13] = "\x00";
         
-        // Byte 14 = scale
-        $this->buffer[$this->offset + $offset + 14] = chr($scale & 0xFF);
+        // Byte 14: Scale (0-28)
+        $this->buffer[$this->offset + $offset + 14] = pack('C', $scale);
         
-        // Byte 15 = sign
+        // Byte 15: Sign
         $this->buffer[$this->offset + $offset + 15] = $negative ? "\x80" : "\x00";
     }
 
