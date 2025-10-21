@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.7] - 2025-10-21
+
+### Added
+- **Complete FieldModel Library:** All primitive and complex type field models
+  - Primitives: Bool, Int8-64, UInt8-64, Float, Double
+  - Complex: Timestamp, UUID, Bytes, Decimal
+- **Comprehensive Test Suite:** test_field_models.php testing all 16 field models
+- **Modern PHP 8.4 Syntax:** Clean, type-safe implementations
+
+### Verified
+- ✅ All 16 field models working correctly
+- ✅ 106 bytes serialization test passed
+- ✅ Round-trip serialization/deserialization
+
 ## [0.0.6] - 2025-10-21
 
 ### Added
