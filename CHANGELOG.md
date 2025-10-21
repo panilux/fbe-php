@@ -1,3 +1,15 @@
+## [0.1.1] - 2025-10-21
+
+### Added
+- **Binary Compatibility Tests:** Cross-platform PHP ↔ Rust verification
+- **THE CHALLENGE:** Passed! %100 binary compatible with Rust implementation
+
+### Verified
+- ✅ PHP → PHP: PASS
+- ✅ Rust → PHP: PASS (reads Rust binary)
+- ✅ PHP → Rust: PASS (Rust reads PHP binary)
+- ✅ Binary format identical (byte-for-byte)
+
 ## [0.1.0] - 2025-10-21
 
 ### Added
@@ -163,3 +175,32 @@ All notable changes to this project will be documented in this file.
 - FieldModel base classes
 - Basic type support (primitives, strings)
 - PHP code generator (fbec)
+
+## [0.1.2] - 2025-10-21
+
+### Added
+- Optional type support (Type?)
+- writeOptionalInt32(), writeOptionalString(), writeOptionalDouble()
+- readOptionalInt32(), readOptionalString(), readOptionalDouble()
+- hasValue() method for null checking
+
+### Format
+- 1 byte: has_value flag (0=null, 1=has value)
+- 4 bytes: pointer to data
+- At pointer: actual value
+
+## [0.1.3] - 2025-10-21
+
+### Added
+- Nested struct support with FBE-compliant FieldModel pattern
+- Pointer-based FieldModelString (FBE spec)
+- Address and UserWithAddress test structs
+- Comprehensive FBE ground truth validation
+
+### Changed
+- FieldModelString now uses pointer-based format (breaking change)
+
+### Validated
+- PHP → FBE Python: PASS
+- Rust → FBE Python: PASS
+- PHP ↔ Rust: Binary identical

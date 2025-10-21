@@ -386,5 +386,40 @@ final class ReadBuffer
         }
         return $values;
     }
-}
 
+    // Optional types
+    public function hasValue(int $offset): bool
+    {
+        return $this->readUInt8($offset) !== 0;
+    }
+
+    public function readOptionalInt32(int $offset): ?int
+    {
+        if (!$this->hasValue($offset)) {
+            return null;
+        }
+        
+        $dataOffset = $this->readUInt32($offset + 1);
+        return $this->readInt32($dataOffset);
+    }
+
+    public function readOptionalString(int $offset): ?string
+    {
+        if (!$this->hasValue($offset)) {
+            return null;
+        }
+        
+        $dataOffset = $this->readUInt32($offset + 1);
+        return $this->readString($dataOffset);
+    }
+
+    public function readOptionalDouble(int $offset): ?float
+    {
+        if (!$this->hasValue($offset)) {
+            return null;
+        }
+        
+        $dataOffset = $this->readUInt32($offset + 1);
+        return $this->readDouble($dataOffset);
+    }
+}
