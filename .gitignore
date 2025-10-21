@@ -1,0 +1,64 @@
+# PHP
+vendor/
+composer.lock
+*.phar
+
+# Test outputs
+*.bin
+*.dat
+/tmp/
+/temp/
+
+# IDE - IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# IDE - PhpStorm
+.phpstorm.meta.php
+_ide_helper.php
+_ide_helper_models.php
+
+# IDE - VSCode
+.vscode/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Cache
+cache/
+.cache/
+
+# Build
+build/
+dist/
+
+# Coverage
+coverage/
+.phpunit.result.cache
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Generated files
+test/gen_*/
+*.generated.php
+
