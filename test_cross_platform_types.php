@@ -31,7 +31,7 @@ $writer->writeDecimal(24 + 4 + strlen($bytes), $decimalValue, $decimalScale, $de
 
 // Save to file
 file_put_contents('/tmp/php_types.bin', $writer->data());
-echo "PHP wrote " . $writer->size() . " bytes to /tmp/php_types.bin\n";
+echo "PHP wrote " . $writer->size . " bytes to /tmp/php_types.bin\n";
 
 // Read back
 $reader = new ReadBuffer($writer->data());

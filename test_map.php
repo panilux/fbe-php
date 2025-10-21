@@ -14,7 +14,7 @@ $writer = new WriteBuffer();
 $entries = [1 => 100, 2 => 200, 3 => 300];
 $writer->writeMapInt32(0, $entries);
 
-echo "   Buffer size: " . $writer->size() . "\n";
+echo "   Buffer size: " . $writer->size . "\n";
 echo "   Binary: " . bin2hex($writer->data()) . "\n";
 
 $reader = new ReadBuffer($writer->data());

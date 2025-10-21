@@ -14,7 +14,7 @@ $values = [100, 200, 300, 400, 500];
 $writer->writeVectorInt32(0, $values);
 
 file_put_contents('/tmp/php_vector.bin', $writer->data());
-echo "PHP wrote " . $writer->size() . " bytes\n";
+echo "PHP wrote " . $writer->size . " bytes\n";
 echo "PHP binary: " . bin2hex($writer->data()) . "\n";
 
 // Read back
