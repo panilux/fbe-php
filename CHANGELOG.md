@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.8] - 2025-10-21
+
+### Added
+- **Collection Field Models:** Vector, Array, Map, Set
+  - FieldModelVectorInt32: Dynamic arrays
+  - FieldModelArrayInt32: Fixed-size arrays
+  - FieldModelMapInt32: Key-value pairs
+  - FieldModelSetInt32: Unique values (auto-deduplication)
+- **Comprehensive Test Suite:** test_field_model_collections.php
+- **extra() method:** Calculates dynamic collection sizes
+
+### Verified
+- ✅ All 4 collection field models working
+- ✅ Pointer-based storage for dynamic collections
+- ✅ Inline storage for fixed arrays
+
 ## [0.0.7] - 2025-10-21
 
 ### Added
