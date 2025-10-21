@@ -1,5 +1,5 @@
 {
-    "name": "panilux/fbe-php",
+    "name": "panilux/fbe",
     "description": "Fast Binary Encoding (FBE) for PHP - High-performance binary serialization library with 100% FBE specification alignment",
     "type": "library",
     "license": "MIT",
