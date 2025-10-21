@@ -1,4 +1,4 @@
-# FBE PHP - Fast Binary Encoding for PHP
+# FBE - Fast Binary Encoding for PHP
 
 High-performance binary serialization library for PHP, fully compatible with the [Fast Binary Encoding](https://github.com/chronoxor/FastBinaryEncoding) specification.
 
@@ -20,14 +20,14 @@ High-performance binary serialization library for PHP, fully compatible with the
 ### Via Composer
 
 ```bash
-composer require panilux/fbe-php
+composer require panilux/fbe
 ```
 
 ### Manual Installation
 
 ```bash
 git clone https://github.com/panilux/fbe-php.git
-cd fbe-php
+cd fbe
 ```
 
 ## Quick Start
