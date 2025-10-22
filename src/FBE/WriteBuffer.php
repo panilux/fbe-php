@@ -115,7 +115,37 @@ final class WriteBuffer
     }
 
     /**
-     * Write bool value
+     * Write byte value (1 byte, unsigned, alias for uint8)
+     */
+    public function writeByte(int $offset, int $value): void
+    {
+        $this->ensureSpace($offset, 1);
+        $this->buffer[$this->offset + $offset] = chr($value & 0xFF);
+    }
+
+    /**
+     * Write char value (1 byte, unsigned)
+     */
+    public function writeChar(int $offset, int $value): void
+    {
+        $this->ensureSpace($offset, 1);
+        $this->buffer[$this->offset + $offset] = chr($value & 0xFF);
+    }
+
+    /**
+     * Write wchar value (4 bytes, little-endian, unsigned)
+     */
+    public function writeWChar(int $offset, int $value): void
+    {
+        $this->ensureSpace($offset, 4);
+        $packed = pack('V', $value);
+        for ($i = 0; $i < 4; $i++) {
+            $this->buffer[$this->offset + $offset + $i] = $packed[$i];
+        }
+    }
+
+    /**
+     * Write bool value (1 byte: 0 or 1)
      */
     public function writeBool(int $offset, bool $value): void
     {

@@ -5,14 +5,18 @@ require_once __DIR__ . '/src/FBE/ReadBuffer.php';
 require_once __DIR__ . '/src/FBE/FieldModel.php';
 require_once __DIR__ . '/src/FBE/FieldModelInt32.php';
 require_once __DIR__ . '/src/FBE/FieldModelString.php';
+require_once __DIR__ . '/src/FBE/FinalModelInt32.php';
+require_once __DIR__ . '/src/FBE/FinalModelString.php';
 require_once __DIR__ . '/test/Side.php';
 require_once __DIR__ . '/test/UserData.php';
 require_once __DIR__ . '/test/UserModel.php';
+require_once __DIR__ . '/test/UserFinalModel.php';
 
 use FBE\WriteBuffer;
 use FBE\ReadBuffer;
 use FBE\Test\User;
 use FBE\Test\UserModel;
+use FBE\Test\UserFinalModel;
 use FBE\Test\Side;
 
 echo "Testing FBE struct-based serialization...\n\n";
@@ -22,7 +26,7 @@ echo "1. Testing User serialization...\n";
 $user = new User(42, "Panilux", Side::Buy);
 
 $buffer = new WriteBuffer();
-$model = new UserModel($buffer);
+$model = new UserFinalModel($buffer);
 $size = $model->serialize($user, $buffer);
 
 echo "   Serialized size: {$size} bytes\n";
@@ -31,7 +35,7 @@ echo "   Binary: " . bin2hex($buffer->data()) . "\n";
 // Test 2: Deserialize User
 echo "\n2. Testing User deserialization...\n";
 $reader = new ReadBuffer($buffer->data());
-$model2 = new UserModel($reader);
+$model2 = new UserFinalModel($reader);
 $user2 = $model2->deserialize($reader);
 
 echo "   Deserialized:\n";
