@@ -1,0 +1,15 @@
+package test;
+
+enum Side : int32
+{
+    Buy = 0;
+    Sell = 1;
+}
+
+struct User
+{
+    int32 id;
+    string name;
+    Side side;
+}
+
