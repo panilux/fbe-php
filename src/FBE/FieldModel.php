@@ -49,6 +49,14 @@ abstract class FieldModel
     }
 
     /**
+     * Set offset explicitly
+     */
+    public function setOffset(int $offset): void
+    {
+        $this->offset = $offset;
+    }
+
+    /**
      * Shift offset forward
      */
     public function shift(int $offset): void
