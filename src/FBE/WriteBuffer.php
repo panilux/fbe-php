@@ -361,6 +361,16 @@ final class WriteBuffer
     }
 
     /**
+     * Write list of int32 values (linked list, same format as vector)
+     * Format: 4-byte offset pointer → (4-byte size + elements)
+     */
+    public function writeListInt32(int $offset, array $values): int
+    {
+        // List uses same format as vector (pointer-based)
+        return $this->writeVectorInt32($offset, $values);
+    }
+
+    /**
      * Write vector of int32 values
      * Format: 4-byte offset pointer → (4-byte size + elements)
      */
