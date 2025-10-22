@@ -183,6 +183,8 @@ class FBEGenerator
 
         foreach ($this->structs as $struct) {
             $this->generateStruct($struct, $outputDir);
+            $this->generateModel($struct, $outputDir);
+            $this->generateFinalModel($struct, $outputDir);
         }
     }
 
@@ -492,6 +494,270 @@ class FBEGenerator
             return end($parts);  // For now, just use the class name
         }
         return $baseStruct;
+    }
+
+    private function generateModel(array $struct, string $outputDir): void
+    {
+        $name = $struct['name'];
+        $fileName = "$outputDir/{$name}Model.php";
+
+        $code = "<?php\n\ndeclare(strict_types=1);\n\n";
+        $code .= "use FBE\\*;\n\n";
+        $code .= "final class {$name}Model\n{\n";
+        $code .= "    private \$buffer;\n";
+        $code .= "    private int \$offset;\n\n";
+
+        // Field models
+        foreach ($struct['fields'] as $field) {
+            $fieldName = $field['name'];
+            $fieldModelClass = $this->getFieldModelClass($field['fbeType']);
+            $code .= "    private {$fieldModelClass} \${$fieldName};\n";
+        }
+
+        // Constructor
+        $code .= "\n    public function __construct(\$buffer, int \$offset = 0)\n    {\n";
+        $code .= "        \$this->buffer = \$buffer;\n";
+        $code .= "        \$this->offset = \$offset;\n\n";
+
+        $fieldOffset = 0;
+        foreach ($struct['fields'] as $field) {
+            $fieldName = $field['name'];
+            $fieldModelClass = $this->getFieldModelClass($field['fbeType']);
+            $itemModel = $this->getItemModelForCollection($field['fbeType']);
+            
+            if ($itemModel) {
+                $code .= "        \$this->{$fieldName} = new {$fieldModelClass}(\$buffer, \$offset + {$fieldOffset}, {$itemModel});\n";
+            } else {
+                $code .= "        \$this->{$fieldName} = new {$fieldModelClass}(\$buffer, \$offset + {$fieldOffset});\n";
+            }
+            
+            $fieldOffset += $this->getFieldSize($field['fbeType']);
+        }
+
+        $code .= "    }\n\n";
+
+        // Serialize method
+        $code .= "    public function serialize({$name} \$obj, \$buffer): int\n    {\n";
+        $code .= "        \$offset = 0;\n";
+        foreach ($struct['fields'] as $field) {
+            $fieldName = $field['name'];
+            $code .= "        \$this->{$fieldName}->set(\$obj->{$fieldName});\n";
+            $code .= "        \$offset += \$this->{$fieldName}->size() + \$this->{$fieldName}->extra();\n";
+        }
+        $code .= "        return \$offset;\n";
+        $code .= "    }\n\n";
+
+        // Deserialize method
+        $code .= "    public function deserialize(\$buffer): {$name}\n    {\n";
+        $code .= "        \$obj = new {$name}();\n";
+        foreach ($struct['fields'] as $field) {
+            $fieldName = $field['name'];
+            $code .= "        \$obj->{$fieldName} = \$this->{$fieldName}->get();\n";
+        }
+        $code .= "        return \$obj;\n";
+        $code .= "    }\n";
+
+        $code .= "}\n";
+
+        file_put_contents($fileName, $code);
+    }
+
+    private function generateFinalModel(array $struct, string $outputDir): void
+    {
+        $name = $struct['name'];
+        $fileName = "$outputDir/{$name}FinalModel.php";
+
+        $code = "<?php\n\ndeclare(strict_types=1);\n\n";
+        $code .= "use FBE\\*;\n\n";
+        $code .= "final class {$name}FinalModel\n{\n";
+        $code .= "    private \$buffer;\n";
+        $code .= "    private int \$offset;\n\n";
+
+        // Field models
+        foreach ($struct['fields'] as $field) {
+            $fieldName = $field['name'];
+            $finalModelClass = $this->getFinalModelClass($field['fbeType']);
+            $code .= "    private {$finalModelClass} \${$fieldName};\n";
+        }
+
+        // Constructor
+        $code .= "\n    public function __construct(\$buffer, int \$offset = 0)\n    {\n";
+        $code .= "        \$this->buffer = \$buffer;\n";
+        $code .= "        \$this->offset = \$offset;\n\n";
+
+        $fieldOffset = 0;
+        foreach ($struct['fields'] as $field) {
+            $fieldName = $field['name'];
+            $finalModelClass = $this->getFinalModelClass($field['fbeType']);
+            $itemModel = $this->getItemModelForCollection($field['fbeType']);
+            
+            if ($itemModel) {
+                $code .= "        \$this->{$fieldName} = new {$finalModelClass}(\$buffer, \$offset + {$fieldOffset}, {$itemModel});\n";
+            } else {
+                $code .= "        \$this->{$fieldName} = new {$finalModelClass}(\$buffer, \$offset + {$fieldOffset});\n";
+            }
+            
+            $fieldOffset += $this->getFinalFieldSize($field['fbeType']);
+        }
+
+        $code .= "    }\n\n";
+
+        // Serialize method
+        $code .= "    public function serialize({$name} \$obj, \$buffer): int\n    {\n";
+        $code .= "        \$offset = 0;\n";
+        foreach ($struct['fields'] as $field) {
+            $fieldName = $field['name'];
+            $code .= "        \$this->{$fieldName}->set(\$obj->{$fieldName});\n";
+            $code .= "        \$offset += \$this->{$fieldName}->size();\n";
+        }
+        $code .= "        return \$offset;\n";
+        $code .= "    }\n\n";
+
+        // Deserialize method
+        $code .= "    public function deserialize(\$buffer): {$name}\n    {\n";
+        $code .= "        \$obj = new {$name}();\n";
+        foreach ($struct['fields'] as $field) {
+            $fieldName = $field['name'];
+            $code .= "        \$obj->{$fieldName} = \$this->{$fieldName}->get();\n";
+        }
+        $code .= "        return \$obj;\n";
+        $code .= "    }\n";
+
+        $code .= "}\n";
+
+        file_put_contents($fileName, $code);
+    }
+
+    private function getFieldModelClass(string $type): string
+    {
+        $typeMap = [
+            'bool' => 'FieldModelBool',
+            'byte' => 'FieldModelByte',
+            'char' => 'FieldModelChar',
+            'wchar' => 'FieldModelWChar',
+            'int8' => 'FieldModelInt8',
+            'uint8' => 'FieldModelUInt8',
+            'int16' => 'FieldModelInt16',
+            'uint16' => 'FieldModelUInt16',
+            'int32' => 'FieldModelInt32',
+            'uint32' => 'FieldModelUInt32',
+            'int64' => 'FieldModelInt64',
+            'uint64' => 'FieldModelUInt64',
+            'float' => 'FieldModelFloat',
+            'double' => 'FieldModelDouble',
+            'string' => 'FieldModelString',
+            'bytes' => 'FieldModelBytes',
+            'decimal' => 'FieldModelDecimal',
+            'timestamp' => 'FieldModelTimestamp',
+            'uuid' => 'FieldModelUUID',
+        ];
+
+        // Handle collections
+        if (str_starts_with($type, 'vector<')) {
+            return 'FieldModelVector';
+        }
+        if (str_starts_with($type, 'array<')) {
+            return 'FieldModelArray';
+        }
+        if (str_starts_with($type, 'map<')) {
+            return 'FieldModelMap';
+        }
+        if (str_starts_with($type, 'set<')) {
+            return 'FieldModelSet';
+        }
+
+        return $typeMap[$type] ?? 'FieldModelInt32';
+    }
+
+    private function getFinalModelClass(string $type): string
+    {
+        $typeMap = [
+            'bool' => 'FinalModelBool',
+            'byte' => 'FinalModelByte',
+            'char' => 'FinalModelChar',
+            'wchar' => 'FinalModelWChar',
+            'int8' => 'FinalModelInt8',
+            'uint8' => 'FinalModelUInt8',
+            'int16' => 'FinalModelInt16',
+            'uint16' => 'FinalModelUInt16',
+            'int32' => 'FinalModelInt32',
+            'uint32' => 'FinalModelUInt32',
+            'int64' => 'FinalModelInt64',
+            'uint64' => 'FinalModelUInt64',
+            'float' => 'FinalModelFloat',
+            'double' => 'FinalModelDouble',
+            'string' => 'FinalModelString',
+            'bytes' => 'FinalModelBytes',
+            'decimal' => 'FinalModelDecimal',
+            'timestamp' => 'FinalModelTimestamp',
+            'uuid' => 'FinalModelUUID',
+        ];
+
+        // Handle collections
+        if (str_starts_with($type, 'vector<')) {
+            return 'FinalModelVector';
+        }
+        if (str_starts_with($type, 'array<')) {
+            return 'FinalModelArray';
+        }
+        if (str_starts_with($type, 'map<')) {
+            return 'FinalModelMap';
+        }
+        if (str_starts_with($type, 'set<')) {
+            return 'FinalModelSet';
+        }
+
+        return $typeMap[$type] ?? 'FinalModelInt32';
+    }
+
+    private function getItemModelForCollection(string $type): ?string
+    {
+        // Extract item type from collection
+        if (preg_match('/(vector|array|set)<(.+)>/', $type, $match)) {
+            $itemType = trim($match[2]);
+            return "new " . $this->getFieldModelClass($itemType) . "(\$buffer, 0)";
+        }
+        return null;
+    }
+
+    private function getFieldSize(string $type): int
+    {
+        // FieldModel: primitives inline, complex pointer-based (4 bytes)
+        $sizes = [
+            'bool' => 1,
+            'byte' => 1,
+            'char' => 1,
+            'wchar' => 2,
+            'int8' => 1,
+            'uint8' => 1,
+            'int16' => 2,
+            'uint16' => 2,
+            'int32' => 4,
+            'uint32' => 4,
+            'int64' => 8,
+            'uint64' => 8,
+            'float' => 4,
+            'double' => 8,
+            'string' => 4, // Pointer
+            'bytes' => 4,
+            'decimal' => 16,
+            'timestamp' => 8,
+            'uuid' => 16,
+        ];
+
+        // Collections are pointer-based
+        if (str_starts_with($type, 'vector<') || str_starts_with($type, 'map<') || str_starts_with($type, 'set<')) {
+            return 4;
+        }
+
+        return $sizes[$type] ?? 4;
+    }
+
+    private function getFinalFieldSize(string $type): int
+    {
+        // FinalModel: inline format, variable size
+        // For simplicity, return 4 (will be calculated dynamically)
+        return 4;
     }
 }
 

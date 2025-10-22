@@ -54,7 +54,31 @@ final class ReadBuffer
     }
 
     /**
-     * Read bool value
+     * Read byte value (1 byte, unsigned, alias for uint8)
+     */
+    public function readByte(int $offset): int
+    {
+        return ord($this->buffer[$this->offset + $offset]);
+    }
+
+    /**
+     * Read char value (1 byte, unsigned)
+     */
+    public function readChar(int $offset): int
+    {
+        return ord($this->buffer[$this->offset + $offset]);
+    }
+
+    /**
+     * Read wchar value (4 bytes, little-endian, unsigned)
+     */
+    public function readWChar(int $offset): int
+    {
+        return unpack('V', substr($this->buffer, $this->offset + $offset, 4))[1];
+    }
+
+    /**
+     * Read bool value (1 byte)
      */
     public function readBool(int $offset): bool
     {
@@ -222,6 +246,16 @@ final class ReadBuffer
             'scale' => $scale,
             'negative' => $negative,
         ];
+    }
+
+    /**
+     * Read list of int32 values (linked list, same format as vector)
+     * Format: 4-byte offset pointer → (4-byte size + elements)
+     */
+    public function readListInt32(int $offset): array
+    {
+        // List uses same format as vector (pointer-based)
+        return $this->readVectorInt32($offset);
     }
 
     /**

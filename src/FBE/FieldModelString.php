@@ -60,8 +60,8 @@ final class FieldModelString extends FieldModel
             return "";
         }
 
-        // Read string data
-        $data = substr($this->buffer->buffer, $pointer + 4, $size);
+        // Read string data (include buffer offset)
+        $data = substr($this->buffer->buffer, $this->buffer->offset + $pointer + 4, $size);
         return $data;
     }
 
