@@ -1,7 +1,7 @@
 <?php
 
-require_once __DIR__ . '/fbe-php/src/FBE/WriteBuffer.php';
-require_once __DIR__ . '/fbe-php/src/FBE/ReadBuffer.php';
+require_once __DIR__ . '/src/FBE/WriteBuffer.php';
+require_once __DIR__ . '/src/FBE/ReadBuffer.php';
 
 use FBE\WriteBuffer;
 use FBE\ReadBuffer;

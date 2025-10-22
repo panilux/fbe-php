@@ -17,7 +17,7 @@
         "ext-mbstring": "*"
     },
     "require-dev": {
-        "phpunit/phpunit": "^10.0"
+        "phpunit/phpunit": "^11.0"
     },
     "autoload": {
         "psr-4": {
@@ -31,7 +31,8 @@
     },
     "bin": ["bin/fbec"],
     "scripts": {
-        "test": "php test_types.php && php test_collections.php && php test_inheritance.php"
+        "test": "phpunit",
+        "test:coverage": "phpunit --coverage-html coverage"
     },
     "config": {
         "sort-packages": true,

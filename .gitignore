@@ -44,9 +44,10 @@ cache/
 build/
 dist/
 
-# Coverage
+# Coverage & PHPUnit
 coverage/
 .phpunit.result.cache
+.phpunit.cache/
 
 # Environment
 .env
