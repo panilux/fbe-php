@@ -31,7 +31,8 @@
     },
     "bin": ["bin/fbec"],
     "scripts": {
-        "test": "php test_types.php && php test_collections.php && php test_inheritance.php"
+        "test": "php run-tests.php",
+        "test:single": "php"
     },
     "config": {
         "sort-packages": true,
