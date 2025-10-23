@@ -449,6 +449,44 @@ final class WriteBuffer
         return $this->writeVectorInt32($offset, $values);
     }
 
+    /**
+     * Write map of string key to int32 value pairs
+     * Format: 4-byte offset pointer → (4-byte size + key-value pairs)
+     * @param array $entries Associative array of string => int pairs
+     */
+    public function writeMapStringInt32(int $offset, array $entries): int
+    {
+        // First ensure space for pointer
+        $this->ensureSpace($offset, 4);
+
+        $size = count($entries);
+        
+        // Calculate total data size
+        $dataSize = 4; // size field
+        foreach ($entries as $key => $value) {
+            $dataSize += 4 + strlen($key) + 4; // string length + string + int32 value
+        }
+        
+        $dataOffset = $this->allocate($dataSize);
+
+        // Write pointer at offset
+        $this->writeUInt32($offset, $dataOffset - $this->offset);
+
+        // Write size at data_offset
+        $this->writeUInt32($dataOffset - $this->offset, $size);
+
+        // Write key-value pairs
+        $currentOffset = $dataOffset - $this->offset + 4;
+        foreach ($entries as $key => $value) {
+            $this->writeString($currentOffset, $key);
+            $currentOffset += 4 + strlen($key);
+            $this->writeInt32($currentOffset, $value);
+            $currentOffset += 4;
+        }
+
+        return $dataSize;
+    }
+
     // ========================================================================
     // Collections (String)
     // ========================================================================

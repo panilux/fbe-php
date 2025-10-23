@@ -419,6 +419,36 @@ final class ReadBuffer
         return $values;
     }
 
+    /**
+     * Read map of string key to int32 value pairs
+     * Format: 4-byte offset pointer → (4-byte size + key-value pairs)
+     * @return array Associative array of string => int pairs
+     */
+    public function readMapStringInt32(int $offset): array
+    {
+        // Read pointer
+        $dataOffset = $this->readUInt32($offset);
+        if ($dataOffset === 0) {
+            return [];
+        }
+
+        // Read size
+        $size = $this->readUInt32($dataOffset);
+
+        // Read key-value pairs
+        $result = [];
+        $currentOffset = $dataOffset + 4;
+        for ($i = 0; $i < $size; $i++) {
+            $key = $this->readString($currentOffset);
+            $currentOffset += 4 + strlen($key);
+            $value = $this->readInt32($currentOffset);
+            $currentOffset += 4;
+            $result[$key] = $value;
+        }
+
+        return $result;
+    }
+
     // Optional types
     public function hasValue(int $offset): bool
     {
