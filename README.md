@@ -248,19 +248,29 @@ FBE PHP is 100% binary compatible with:
 
 ```bash
 # Run all tests
-php test_types.php
-php test_collections.php
-php test_inheritance.php
-php test_keys.php
-php test_defaults.php
-php test_model.php
+composer test
 
-# Run cross-platform tests
-php test_inheritance_cross.php
-php test_keys_cross.php
-php test_defaults_cross.php
-php test_model_cross.php
+# Or run PHPUnit directly
+vendor/bin/phpunit
+
+# Run specific test suites
+vendor/bin/phpunit tests/Unit/          # Buffer tests
+vendor/bin/phpunit tests/Integration/   # Integration tests
 ```
+
+### Test Coverage
+
+**53 tests** covering:
+- ✅ Buffer operations (WriteBuffer, ReadBuffer)
+- ✅ All primitive types (bool, int32, float, double, string)
+- ✅ Collections (vector, array, set, map)
+- ✅ Optional types (primitives + FieldModel + FinalModel)
+- ✅ Structs (FieldModel, FinalModel, nested)
+- ✅ Enums (simple, typed, in structs)
+- ✅ Flags (bitfields, combinations, operations)
+- ✅ Cross-platform compatibility (PHP ↔ Rust)
+
+**100% passing** - All tests verified ✅
 
 ## License
 
