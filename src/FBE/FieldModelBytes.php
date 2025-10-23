@@ -50,8 +50,8 @@ final class FieldModelBytes extends FieldModel
             throw new \RuntimeException("Cannot write to ReadBuffer");
         }
 
-        $dataSize = $this->buffer->writeBytes($this->buffer->size(), $value);
-        $dataOffset = $this->buffer->size() - $dataSize;
+        $dataSize = $this->buffer->writeBytes($this->buffer->size, $value);
+        $dataOffset = $this->buffer->size - $dataSize;
 
         // Write pointer
         $this->buffer->writeUInt32($this->offset, $dataOffset - $this->buffer->offset);
