@@ -55,4 +55,34 @@ class Config
         return $offset;
     }
 
+    /**
+     * Convert struct to JSON string
+     */
+    public function toJson(): string
+    {
+        return json_encode($this, JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * Create struct from JSON string
+     */
+    public static function fromJson(string $json): self
+    {
+        $data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        $obj = new self();
+        $obj->timeout = $data['timeout'] ?? $obj->timeout;
+        $obj->retries = $data['retries'] ?? $obj->retries;
+        $obj->threshold = $data['threshold'] ?? $obj->threshold;
+        $obj->ratio = $data['ratio'] ?? $obj->ratio;
+        return $obj;
+    }
+
+    /**
+     * Convert struct to string for logging
+     */
+    public function __toString(): string
+    {
+        return 'Config(' . 'timeout=' . var_export($this->timeout, true) . ', ' . 'retries=' . var_export($this->retries, true) . ', ' . 'threshold=' . var_export($this->threshold, true) . ', ' . 'ratio=' . var_export($this->ratio, true) . ')';
+    }
+
 }
