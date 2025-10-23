@@ -317,4 +317,34 @@ final class WriteBuffer extends Buffer
     {
         $this->writeUInt64($offset, $nanoseconds);
     }
+
+    // ========================================================================
+    // UUID (16 bytes, big-endian)
+    // ========================================================================
+
+    /**
+     * Write UUID (16 bytes, RFC 4122 big-endian)
+     *
+     * @param int $offset Offset to write at
+     * @param \FBE\V2\Types\Uuid $uuid UUID to write
+     */
+    public function writeUuid(int $offset, \FBE\V2\Types\Uuid $uuid): void
+    {
+        $this->writeRawBytes($offset, $uuid->toBytes());
+    }
+
+    // ========================================================================
+    // DECIMAL (16 bytes, .NET format)
+    // ========================================================================
+
+    /**
+     * Write decimal (16 bytes, .NET Decimal format with 96-bit precision)
+     *
+     * @param int $offset Offset to write at
+     * @param \FBE\V2\Types\Decimal $decimal Decimal to write
+     */
+    public function writeDecimal(int $offset, \FBE\V2\Types\Decimal $decimal): void
+    {
+        $this->writeRawBytes($offset, $decimal->toBytes());
+    }
 }

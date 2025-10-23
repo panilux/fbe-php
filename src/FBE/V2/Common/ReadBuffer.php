@@ -257,6 +257,40 @@ final class ReadBuffer extends Buffer
     }
 
     // ========================================================================
+    // UUID (16 bytes, big-endian)
+    // ========================================================================
+
+    /**
+     * Read UUID (16 bytes, RFC 4122 big-endian)
+     *
+     * @param int $offset Offset to read from
+     * @return \FBE\V2\Types\Uuid UUID value
+     */
+    public function readUuid(int $offset): \FBE\V2\Types\Uuid
+    {
+        $this->checkBounds($offset, 16);
+        $bytes = substr($this->data, $this->absoluteOffset($offset), 16);
+        return \FBE\V2\Types\Uuid::fromBytes($bytes);
+    }
+
+    // ========================================================================
+    // DECIMAL (16 bytes, .NET format)
+    // ========================================================================
+
+    /**
+     * Read decimal (16 bytes, .NET Decimal format with 96-bit precision)
+     *
+     * @param int $offset Offset to read from
+     * @return \FBE\V2\Types\Decimal Decimal value
+     */
+    public function readDecimal(int $offset): \FBE\V2\Types\Decimal
+    {
+        $this->checkBounds($offset, 16);
+        $bytes = substr($this->data, $this->absoluteOffset($offset), 16);
+        return \FBE\V2\Types\Decimal::fromBytes($bytes);
+    }
+
+    // ========================================================================
     // OPTIONAL TYPES (Standard format)
     // ========================================================================
 
