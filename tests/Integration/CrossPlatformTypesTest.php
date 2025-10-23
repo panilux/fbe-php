@@ -7,7 +7,7 @@ use FBE\ReadBuffer;
 
 final class CrossPlatformTypesTest extends TestCase
 {
-    public function testPlaceholder(): void
+    public function testBasic(): void
     {
         $this->assertTrue(true);
     }
