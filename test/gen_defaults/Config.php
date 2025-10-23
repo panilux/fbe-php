@@ -77,4 +77,12 @@ class Config
         return $obj;
     }
 
+    /**
+     * Convert struct to string for logging
+     */
+    public function __toString(): string
+    {
+        return 'Config(' . 'timeout=' . var_export($this->timeout, true) . ', ' . 'retries=' . var_export($this->retries, true) . ', ' . 'threshold=' . var_export($this->threshold, true) . ', ' . 'ratio=' . var_export($this->ratio, true) . ')';
+    }
+
 }

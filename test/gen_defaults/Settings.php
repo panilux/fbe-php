@@ -77,4 +77,12 @@ class Settings
         return $obj;
     }
 
+    /**
+     * Convert struct to string for logging
+     */
+    public function __toString(): string
+    {
+        return 'Settings(' . 'enabled=' . var_export($this->enabled, true) . ', ' . 'debug=' . var_export($this->debug, true) . ', ' . 'name=' . var_export($this->name, true) . ', ' . 'path=' . var_export($this->path, true) . ')';
+    }
+
 }

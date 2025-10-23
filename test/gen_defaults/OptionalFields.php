@@ -77,4 +77,12 @@ class OptionalFields
         return $obj;
     }
 
+    /**
+     * Convert struct to string for logging
+     */
+    public function __toString(): string
+    {
+        return 'OptionalFields(' . 'count=' . var_export($this->count, true) . ', ' . 'text=' . var_export($this->text, true) . ', ' . 'flag=' . var_export($this->flag, true) . ', ' . 'value=' . var_export($this->value, true) . ')';
+    }
+
 }

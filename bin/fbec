@@ -309,6 +309,20 @@ class FBEGenerator
         $code .= "        return \$obj;\n";
         $code .= "    }\n\n";
 
+        // Add __toString for logging
+        $code .= "    /**\n";
+        $code .= "     * Convert struct to string for logging\n";
+        $code .= "     */\n";
+        $code .= "    public function __toString(): string\n    {\n";
+        $code .= "        return '{$name}(' . ";
+        $fieldStrings = [];
+        foreach ($struct['fields'] as $field) {
+            $fieldStrings[] = "'{$field['name']}=' . var_export(\$this->{$field['name']}, true)";
+        }
+        $code .= implode(" . ', ' . ", $fieldStrings);
+        $code .= " . ')';";  
+        $code .= "\n    }\n\n";
+
         // Add getKey() method if struct has key fields
         $keyFields = array_filter($struct['fields'], fn($f) => $f['isKey'] ?? false);
         if (!empty($keyFields)) {

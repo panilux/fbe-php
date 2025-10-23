@@ -91,4 +91,12 @@ class Order
         return $obj;
     }
 
+    /**
+     * Convert struct to string for logging
+     */
+    public function __toString(): string
+    {
+        return 'Order(' . 'id=' . var_export($this->id, true) . ', ' . 'symbol=' . var_export($this->symbol, true) . ', ' . 'price=' . var_export($this->price, true) . ', ' . 'volume=' . var_export($this->volume, true) . ', ' . 'tp=' . var_export($this->tp, true) . ', ' . 'sl=' . var_export($this->sl, true) . ')';
+    }
+
 }
