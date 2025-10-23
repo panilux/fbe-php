@@ -55,4 +55,26 @@ class Settings
         return $offset;
     }
 
+    /**
+     * Convert struct to JSON string
+     */
+    public function toJson(): string
+    {
+        return json_encode($this, JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * Create struct from JSON string
+     */
+    public static function fromJson(string $json): self
+    {
+        $data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        $obj = new self();
+        $obj->enabled = $data['enabled'] ?? $obj->enabled;
+        $obj->debug = $data['debug'] ?? $obj->debug;
+        $obj->name = $data['name'] ?? $obj->name;
+        $obj->path = $data['path'] ?? $obj->path;
+        return $obj;
+    }
+
 }

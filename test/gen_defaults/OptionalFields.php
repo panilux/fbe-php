@@ -55,4 +55,26 @@ class OptionalFields
         return $offset;
     }
 
+    /**
+     * Convert struct to JSON string
+     */
+    public function toJson(): string
+    {
+        return json_encode($this, JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * Create struct from JSON string
+     */
+    public static function fromJson(string $json): self
+    {
+        $data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        $obj = new self();
+        $obj->count = $data['count'] ?? $obj->count;
+        $obj->text = $data['text'] ?? $obj->text;
+        $obj->flag = $data['flag'] ?? $obj->flag;
+        $obj->value = $data['value'] ?? $obj->value;
+        return $obj;
+    }
+
 }

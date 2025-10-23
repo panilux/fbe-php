@@ -67,4 +67,28 @@ class Order
         return $offset;
     }
 
+    /**
+     * Convert struct to JSON string
+     */
+    public function toJson(): string
+    {
+        return json_encode($this, JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * Create struct from JSON string
+     */
+    public static function fromJson(string $json): self
+    {
+        $data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        $obj = new self();
+        $obj->id = $data['id'] ?? $obj->id;
+        $obj->symbol = $data['symbol'] ?? $obj->symbol;
+        $obj->price = $data['price'] ?? $obj->price;
+        $obj->volume = $data['volume'] ?? $obj->volume;
+        $obj->tp = $data['tp'] ?? $obj->tp;
+        $obj->sl = $data['sl'] ?? $obj->sl;
+        return $obj;
+    }
+
 }

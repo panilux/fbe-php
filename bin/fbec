@@ -289,6 +289,26 @@ class FBEGenerator
         $code .= "        return \$offset;\n";
         $code .= "    }\n\n";
 
+        // Add JSON serialization methods
+        $code .= "    /**\n";
+        $code .= "     * Convert struct to JSON string\n";
+        $code .= "     */\n";
+        $code .= "    public function toJson(): string\n    {\n";
+        $code .= "        return json_encode(\$this, JSON_THROW_ON_ERROR);\n";
+        $code .= "    }\n\n";
+
+        $code .= "    /**\n";
+        $code .= "     * Create struct from JSON string\n";
+        $code .= "     */\n";
+        $code .= "    public static function fromJson(string \$json): self\n    {\n";
+        $code .= "        \$data = json_decode(\$json, true, 512, JSON_THROW_ON_ERROR);\n";
+        $code .= "        \$obj = new self();\n";
+        foreach ($struct['fields'] as $field) {
+            $code .= "        \$obj->{$field['name']} = \$data['{$field['name']}'] ?? \$obj->{$field['name']};\n";
+        }
+        $code .= "        return \$obj;\n";
+        $code .= "    }\n\n";
+
         // Add getKey() method if struct has key fields
         $keyFields = array_filter($struct['fields'], fn($f) => $f['isKey'] ?? false);
         if (!empty($keyFields)) {
