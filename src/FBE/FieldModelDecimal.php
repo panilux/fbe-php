@@ -50,8 +50,8 @@ final class FieldModelDecimal extends FieldModel
             throw new \RuntimeException("Cannot write to ReadBuffer");
         }
 
-        $dataSize = $this->buffer->writeDecimal($this->buffer->size(), $value);
-        $dataOffset = $this->buffer->size() - $dataSize;
+        $dataSize = $this->buffer->writeDecimal($this->buffer->size, $value);
+        $dataOffset = $this->buffer->size - $dataSize;
 
         // Write pointer
         $this->buffer->writeUInt32($this->offset, $dataOffset - $this->buffer->offset);
