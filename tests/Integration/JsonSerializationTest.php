@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace FBE\Tests\Integration;
 
 use PHPUnit\Framework\TestCase;
+use FBEGenDefaults\Order;
 
 final class JsonSerializationTest extends TestCase
 {
@@ -12,7 +13,7 @@ final class JsonSerializationTest extends TestCase
     {
         require_once __DIR__ . '/../../test/gen_defaults/Order.php';
         
-        $order = new \Order();
+        $order = new Order();
         $order->id = 12345;
         $order->symbol = 'AAPL';
         $order->price = 150.50;
@@ -35,7 +36,7 @@ final class JsonSerializationTest extends TestCase
         
         $json = '{"id":67890,"symbol":"GOOGL","price":2800.75,"volume":50.0,"tp":2900.0,"sl":2700.0}';
         
-        $order = \Order::fromJson($json);
+        $order = Order::fromJson($json);
         
         $this->assertEquals(67890, $order->id);
         $this->assertEquals('GOOGL', $order->symbol);
@@ -49,7 +50,7 @@ final class JsonSerializationTest extends TestCase
     {
         require_once __DIR__ . '/../../test/gen_defaults/Order.php';
         
-        $original = new \Order();
+        $original = new Order();
         $original->id = 99999;
         $original->symbol = 'TSLA';
         $original->price = 750.25;
@@ -58,7 +59,7 @@ final class JsonSerializationTest extends TestCase
         $original->sl = 700.0;
         
         $json = $original->toJson();
-        $restored = \Order::fromJson($json);
+        $restored = Order::fromJson($json);
         
         $this->assertEquals($original->id, $restored->id);
         $this->assertEquals($original->symbol, $restored->symbol);

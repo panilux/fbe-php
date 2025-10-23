@@ -7,6 +7,7 @@ namespace FBE\Tests\Integration;
 use FBE\Sender;
 use FBE\Receiver;
 use PHPUnit\Framework\TestCase;
+use FBEGenDefaults\Order;
 
 final class ProtocolTest extends TestCase
 {
@@ -34,13 +35,13 @@ final class ProtocolTest extends TestCase
             
             protected function onReceive(string $data, int $size): bool
             {
-                $this->lastReceived = \Order::deserialize($this->buffer);
+                $this->lastReceived = \FBEGenDefaults\Order::deserialize($this->buffer);
                 return true;
             }
         };
         
         // Send order
-        $order = new \Order();
+        $order = new Order();
         $order->id = 12345;
         $order->symbol = 'AAPL';
         $order->price = 150.50;
@@ -91,7 +92,7 @@ final class ProtocolTest extends TestCase
         $sender->setLogging(true);
         $this->assertTrue($sender->isLogging());
         
-        $order = new \Order();
+        $order = new Order();
         $order->id = 99999;
         $order->symbol = 'TEST';
         $order->price = 100.0;
@@ -109,7 +110,7 @@ final class ProtocolTest extends TestCase
     {
         require_once __DIR__ . '/../../test/gen_defaults/Order.php';
         
-        $order = new \Order();
+        $order = new Order();
         $order->id = 12345;
         $order->symbol = 'AAPL';
         $order->price = 150.50;

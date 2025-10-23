@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+namespace FBEGenDefaults;
+
 use FBE\WriteBuffer;
 use FBE\ReadBuffer;
 

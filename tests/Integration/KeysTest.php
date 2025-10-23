@@ -7,11 +7,12 @@ namespace FBE\Tests\Integration;
 use PHPUnit\Framework\TestCase;
 use FBE\WriteBuffer;
 use FBE\ReadBuffer;
+use FBEGenKeys\Order as KeysOrder;
+use FBEGenKeys\Balance;
+use FBEGenKeys\UserSession;
+use FBEGenKeys\LogEntry;
 
-if (!class_exists('Order', false)) {
-    require_once __DIR__ . '/../../test/gen_keys/Order.php';
-}
-class_alias('Order', 'KeysOrder', false);
+require_once __DIR__ . '/../../test/gen_keys/Order.php';
 require_once __DIR__ . '/../../test/gen_keys/Balance.php';
 require_once __DIR__ . '/../../test/gen_keys/UserSession.php';
 require_once __DIR__ . '/../../test/gen_keys/LogEntry.php';
@@ -41,15 +42,15 @@ final class KeysTest extends TestCase
     
     public function testStringKeyField(): void
     {
-        $balance1 = new \Balance();
+        $balance1 = new Balance();
         $balance1->currency = "USD";
         $balance1->amount = 1000.00;
         
-        $balance2 = new \Balance();
+        $balance2 = new Balance();
         $balance2->currency = "USD";
         $balance2->amount = 2000.00;
         
-        $balance3 = new \Balance();
+        $balance3 = new Balance();
         $balance3->currency = "EUR";
         $balance3->amount = 1000.00;
         
@@ -59,25 +60,25 @@ final class KeysTest extends TestCase
     
     public function testCompositeKey(): void
     {
-        $session1 = new \UserSession();
+        $session1 = new UserSession();
         $session1->userId = 100;
         $session1->sessionId = "abc123";
         $session1->timestamp = 1234567890;
         $session1->ipAddress = "192.168.1.1";
         
-        $session2 = new \UserSession();
+        $session2 = new UserSession();
         $session2->userId = 100;
         $session2->sessionId = "abc123";
         $session2->timestamp = 9876543210;
         $session2->ipAddress = "10.0.0.1";
         
-        $session3 = new \UserSession();
+        $session3 = new UserSession();
         $session3->userId = 100;
         $session3->sessionId = "xyz789";
         $session3->timestamp = 1234567890;
         $session3->ipAddress = "192.168.1.1";
         
-        $session4 = new \UserSession();
+        $session4 = new UserSession();
         $session4->userId = 200;
         $session4->sessionId = "abc123";
         $session4->timestamp = 1234567890;
@@ -90,7 +91,7 @@ final class KeysTest extends TestCase
     
     public function testNoKeyFields(): void
     {
-        $log = new \LogEntry();
+        $log = new LogEntry();
         $log->timestamp = 1234567890;
         $log->message = "Test message";
         $log->level = "INFO";

@@ -7,6 +7,9 @@ namespace FBE\Tests\Integration;
 use PHPUnit\Framework\TestCase;
 use FBE\WriteBuffer;
 use FBE\ReadBuffer;
+use FBEGenDefaults\Config;
+use FBEGenDefaults\Settings;
+use FBEGenDefaults\Order;
 
 require_once __DIR__ . '/../../test/gen_defaults/Config.php';
 require_once __DIR__ . '/../../test/gen_defaults/Settings.php';
@@ -16,7 +19,7 @@ final class DefaultsTest extends TestCase
 {
     public function testNumericDefaults(): void
     {
-        $config = new \Config();
+        $config = new Config();
         
         $this->assertEquals(30, $config->timeout);
         $this->assertEquals(3, $config->retries);
@@ -26,7 +29,7 @@ final class DefaultsTest extends TestCase
     
     public function testStringAndBooleanDefaults(): void
     {
-        $settings = new \Settings();
+        $settings = new Settings();
         
         $this->assertTrue($settings->enabled);
         $this->assertFalse($settings->debug);
@@ -36,7 +39,7 @@ final class DefaultsTest extends TestCase
     
     public function testMixedDefaults(): void
     {
-        $order = new \Order();
+        $order = new Order();
         
         $this->assertEquals(0, $order->id);
         $this->assertEquals('', $order->symbol);
@@ -48,14 +51,14 @@ final class DefaultsTest extends TestCase
     
     public function testSerializationWithDefaults(): void
     {
-        $config = new \Config();
+        $config = new Config();
         $buffer = new WriteBuffer();
         $size = $config->serialize($buffer);
         
         $this->assertGreaterThan(0, $size);
         
         $readBuffer = new ReadBuffer($buffer->data());
-        $config2 = \Config::deserialize($readBuffer);
+        $config2 = Config::deserialize($readBuffer);
         
         $this->assertEquals(30, $config2->timeout);
         $this->assertEquals(3, $config2->retries);
@@ -64,7 +67,7 @@ final class DefaultsTest extends TestCase
     
     public function testModifyDefaults(): void
     {
-        $order = new \Order();
+        $order = new Order();
         $order->tp = 20.0;
         $order->sl = -20.0;
         
@@ -74,7 +77,7 @@ final class DefaultsTest extends TestCase
     
     public function testDefaultsAfterSerialization(): void
     {
-        $settings = new \Settings();
+        $settings = new Settings();
         
         // Serialize with defaults
         $buffer = new WriteBuffer();
@@ -82,7 +85,7 @@ final class DefaultsTest extends TestCase
         
         // Deserialize
         $readBuffer = new ReadBuffer($buffer->data());
-        $settings2 = \Settings::deserialize($readBuffer);
+        $settings2 = Settings::deserialize($readBuffer);
         
         // Verify defaults are preserved
         $this->assertTrue($settings2->enabled);
@@ -93,7 +96,7 @@ final class DefaultsTest extends TestCase
     
     public function testOverrideDefaults(): void
     {
-        $config = new \Config();
+        $config = new Config();
         $config->timeout = 60;
         $config->retries = 5;
         
@@ -101,7 +104,7 @@ final class DefaultsTest extends TestCase
         $config->serialize($buffer);
         
         $readBuffer = new ReadBuffer($buffer->data());
-        $config2 = \Config::deserialize($readBuffer);
+        $config2 = Config::deserialize($readBuffer);
         
         $this->assertEquals(60, $config2->timeout);
         $this->assertEquals(5, $config2->retries);
