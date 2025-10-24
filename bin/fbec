@@ -430,8 +430,15 @@ class FBEGeneratorV2
         }
 
         $previousFields = [];
+
+        // For Final format inheritance, include parent fields in previousFields
+        // so runtime offset calculation works correctly for all child fields
+        if ($format === 'Final' && !empty($struct['baseStruct'])) {
+            $previousFields = $this->getAllParentFields($struct['baseStruct']);
+        }
+
         foreach ($struct['fields'] as $field) {
-            $code .= $this->generateFieldAccessor($field, $format, $offset, $previousFields);
+            $code .= $this->generateFieldAccessor($field, $format, $offset, $previousFields, $struct);
             $previousFields[] = $field;
             $offset += $this->getFieldSize($field, $format);
         }
@@ -531,7 +538,7 @@ class FBEGeneratorV2
         return null;
     }
 
-    private function generateFieldAccessor(array $field, string $format, int $offset, array $previousFields = []): string
+    private function generateFieldAccessor(array $field, string $format, int $offset, array $previousFields = [], $struct = null): string
     {
         $fieldName = $field['name'];
         $methodName = lcfirst($fieldName);
@@ -550,6 +557,7 @@ class FBEGeneratorV2
             $code .= "        \$currentOffset = \$this->offset";
 
             $calcOffset = 0;
+
             foreach ($previousFields as $prevField) {
                 $prevMethodName = lcfirst($prevField['name']);
                 if ($this->isVariableSize($prevField)) {
@@ -589,6 +597,88 @@ class FBEGeneratorV2
     {
         $variableTypes = ['string', 'bytes', 'vector', 'optional', 'map', 'list', 'set', 'hash', 'array'];
         return in_array($field['fbeType'], $variableTypes);
+    }
+
+    private function getAllParentFields(string $baseStructName): array
+    {
+        $allFields = [];
+
+        // Find parent struct
+        $baseStructName = $this->resolveBaseClass($baseStructName);
+        $parentStruct = null;
+        foreach ($this->structs as $s) {
+            if ($s['name'] === $baseStructName) {
+                $parentStruct = $s;
+                break;
+            }
+        }
+
+        if (!$parentStruct) {
+            return [];
+        }
+
+        // If parent has a parent, get grandparent fields first (recursively)
+        if (!empty($parentStruct['baseStruct'])) {
+            $allFields = $this->getAllParentFields($parentStruct['baseStruct']);
+        }
+
+        // Add parent's own fields
+        foreach ($parentStruct['fields'] as $field) {
+            $allFields[] = $field;
+        }
+
+        return $allFields;
+    }
+
+    private function generateParentFieldSkipCode(string $baseStructName, string $format): string
+    {
+        $code = "";
+
+        // Find parent struct
+        $baseStructName = $this->resolveBaseClass($baseStructName);
+        $parentStruct = null;
+        foreach ($this->structs as $s) {
+            if ($s['name'] === $baseStructName) {
+                $parentStruct = $s;
+                break;
+            }
+        }
+
+        if (!$parentStruct) {
+            return "";
+        }
+
+        $code .= "        // Skip parent fields\n";
+        $code .= "        \$offset = \$this->offset;\n";
+
+        // If parent also has a parent, skip grandparent fields first
+        if (!empty($parentStruct['baseStruct'])) {
+            $grandparentCode = $this->generateParentFieldSkipCode($parentStruct['baseStruct'], $format);
+            // Extract just the field skipping part (without the initial offset assignment)
+            $lines = explode("\n", $grandparentCode);
+            foreach ($lines as $line) {
+                if (strpos($line, '$offset = $this->offset') === false && !empty(trim($line))) {
+                    $code .= $line . "\n";
+                }
+            }
+        }
+
+        // Skip parent's own fields
+        foreach ($parentStruct['fields'] as $field) {
+            $fieldName = lcfirst($field['name']);
+
+            if ($this->isVariableSize($field)) {
+                // Variable-size field: read size and skip
+                $code .= "        \$size{$fieldName} = \$this->buffer->readUInt32(\$offset);\n";
+                $code .= "        \$offset += 4 + \$size{$fieldName};\n";
+            } else {
+                // Fixed-size field: add compile-time size
+                $size = $this->getFieldSize($field, $format);
+                $code .= "        \$offset += $size; // {$fieldName}\n";
+            }
+        }
+
+        return $code;
     }
 
     private function hasVariableSizeFieldBefore(array $previousFields): bool
