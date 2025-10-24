@@ -122,6 +122,11 @@ class FBEGenerator
                     continue;
                 }
 
+                // Remove inline comments
+                if (str_contains($line, '//')) {
+                    $line = trim(explode('//', $line)[0]);
+                }
+
                 if (str_contains($line, '=')) {
                     [$key, $val] = explode('=', $line, 2);
                     $key = trim($key);
@@ -155,6 +160,11 @@ class FBEGenerator
                 $line = trim($line);
                 if (empty($line) || str_starts_with($line, '//')) {
                     continue;
+                }
+
+                // Remove inline comments
+                if (str_contains($line, '//')) {
+                    $line = trim(explode('//', $line)[0]);
                 }
 
                 if (str_contains($line, '=')) {
