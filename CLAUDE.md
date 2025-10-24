@@ -8,7 +8,7 @@ FBE (Fast Binary Encoding) for PHP - A **production-grade, rock-solid** binary s
 
 **Critical:** This is a PHP 8.4+ project that uses modern PHP features including property hooks and readonly properties.
 
-**Status:** V2 production-grade implementation complete with 126 tests, 365 assertions, full FBE spec compliance, and security hardening.
+**Status:** V2 production-grade implementation complete with 159 tests, 487 assertions, full FBE spec compliance, and security hardening.
 
 **Performance:** 5-10 μs/op (10x faster than v1), bounds checking on all operations, 20-38% size reduction with Final format.
 
@@ -16,7 +16,7 @@ FBE (Fast Binary Encoding) for PHP - A **production-grade, rock-solid** binary s
 
 ### Running Tests
 ```bash
-# Run all V2 tests (RECOMMENDED - 126 tests, 365 assertions)
+# Run all V2 tests (RECOMMENDED - 159 tests, 487 assertions)
 vendor/bin/phpunit tests/V2/ --colors=always --testdox
 
 # Run V2 unit tests

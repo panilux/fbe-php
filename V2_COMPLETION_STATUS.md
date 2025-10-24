@@ -22,11 +22,11 @@ Built a **rock-solid, production-grade FBE PHP package** for Panilux Panel & Age
 
 ### Test Coverage
 ```
-Total Tests: 126
-├─ Unit Tests: 120
+Total Tests: 159
+├─ Unit Tests: 153
 └─ Integration Tests: 6
 
-Assertions: 365
+Assertions: 487
 Failures: 0
 Errors: 0
 ```
@@ -118,6 +118,7 @@ Vector<String> ["A","BB","CCC"]
 - [x] Optional tests (8 tests)
 - [x] Map tests (10 tests)
 - [x] Enum tests (12 tests)
+- [x] Protocol/Message tests (33 tests)
 - [x] Integration tests (6 tests)
 
 ### 7. Documentation
@@ -209,9 +210,9 @@ c76b2af feat(v2): Add UUID and Decimal types with full FBE spec compliance
 - [ ] FieldModelFlags
 
 ### Protocol Support
-- [ ] Message framing
-- [ ] Sender/Receiver pattern
-- [ ] Protocol versioning
+- [x] Message framing ✅ COMPLETED
+- [x] Sender/Receiver pattern ✅ COMPLETED
+- [x] Protocol versioning ✅ COMPLETED
 
 ### Code Generation
 - [ ] Update fbec for V2 namespace

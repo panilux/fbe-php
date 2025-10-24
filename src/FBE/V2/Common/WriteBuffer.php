@@ -111,7 +111,7 @@ final class WriteBuffer extends Buffer
     /**
      * OPTIMIZED: Write raw bytes (bulk operation, not character-by-character!)
      */
-    private function writeRawBytes(int $offset, string $bytes): void
+    public function writeRawBytes(int $offset, string $bytes): void
     {
         $length = strlen($bytes);
         $this->ensureSpace($offset, $length);
