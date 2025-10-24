@@ -12,15 +12,9 @@
          failOnNotice="true"
          failOnWarning="true">
     <testsuites>
-        <testsuite name="Core">
+        <testsuite name="Unit">
             <directory>tests/Unit</directory>
         </testsuite>
-        <!-- Integration tests disabled: legacy v1 tests require deleted dependencies -->
-        <!--
-        <testsuite name="Integration">
-            <directory>tests/Integration</directory>
-        </testsuite>
-        -->
     </testsuites>
     <source>
         <include>

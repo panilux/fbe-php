@@ -195,27 +195,28 @@ Vector<String> ["A","BB","CCC"]
 ## 🧪 Testing
 
 ```bash
-# Run all tests (217 tests total)
+# Run all tests
 composer test
 
-# Run all V2 tests (RECOMMENDED)
-vendor/bin/phpunit tests/V2/ --colors=always --testdox
+# Run with testdox output
+vendor/bin/phpunit --testdox
 
 # Run with coverage
 composer test:coverage
-
-# Run specific test suites
-vendor/bin/phpunit tests/Unit/          # Unit tests
-vendor/bin/phpunit tests/Integration/   # Integration tests
 ```
 
 **Test Results:**
-- ✅ **217 tests passing** (100% pass rate)
-- ✅ **631 assertions**
-- ✅ Unit tests: Buffer operations, FieldModels, JSON serialization
-- ✅ Integration tests: Complex structs, nested structures
-- ✅ Protocol tests: Sender/Receiver, MessageRegistry
-- ✅ Edge cases covered (empty, null, large vectors)
+- ✅ **211 tests passing** (100% pass rate)
+- ✅ **605 assertions**
+- ✅ Comprehensive coverage:
+  - Buffer operations (primitives, security, bounds checking)
+  - All FieldModel types (Standard + Final formats)
+  - JSON serialization (all types)
+  - Protocol layer (Sender/Receiver, MessageRegistry)
+  - Complex types (Decimal, UUID, Timestamp)
+  - Collections (Vector, Array, Map, Optional)
+  - Enums and Flags
+  - Edge cases (empty, null, large vectors)
 
 ## 🔧 Advanced Usage
 
