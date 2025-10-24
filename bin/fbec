@@ -394,7 +394,7 @@ class FBEGeneratorV2
         // Generate field accessor methods
         $offset = 0;
         if ($format === 'Standard') {
-            $offset = 4; // Header size
+            $offset = 8; // Header size: 4-byte size + 4-byte type (FBE C++ spec)
         }
 
         // Add parent fields offset if inheritance is used
@@ -772,7 +772,8 @@ class FBEGeneratorV2
 
         if ($format === 'Standard') {
             // Standard format: header + actual field sizes (primitives inline, variables pointer)
-            $headerSize = 4;
+            // Header: 4-byte size + 4-byte type (FBE C++ spec)
+            $headerSize = 8;
 
             // Calculate total size of own fields
             $fieldsSize = 0;
@@ -799,9 +800,12 @@ class FBEGeneratorV2
 
     private function generateVerifyMethod(array $struct, string $format): string
     {
+        $structId = $struct['id'] ?? 0;
+
         $code = "\n";
         $code .= "    /**\n";
         $code .= "     * Verify struct is valid\n";
+        $code .= "     * Checks: 8-byte header (size + type)\n";
         $code .= "     */\n";
         $code .= "    public function verify(): bool\n";
         $code .= "    {\n";
@@ -810,8 +814,19 @@ class FBEGeneratorV2
             $code .= "        if (!(\$this->buffer instanceof \\FBE\\Common\\ReadBuffer)) {\n";
             $code .= "            return false;\n";
             $code .= "        }\n\n";
+            $code .= "        // Verify 8-byte header (FBE C++ spec)\n";
             $code .= "        \$structSize = \$this->buffer->readUInt32(\$this->offset);\n";
-            $code .= "        return \$structSize >= \$this->size();\n";
+            $code .= "        \$structType = \$this->buffer->readUInt32(\$this->offset + 4);\n\n";
+            $code .= "        // Check size and type\n";
+            $code .= "        if (\$structSize < \$this->size()) {\n";
+            $code .= "            return false;\n";
+            $code .= "        }\n";
+            if ($structId > 0) {
+                $code .= "        if (\$structType !== $structId) {\n";
+                $code .= "            return false; // Type mismatch\n";
+                $code .= "        }\n";
+            }
+            $code .= "        return true;\n";
         } else {
             // Final format: no header, always valid
             $code .= "        return true; // Final format has no header\n";
@@ -824,16 +839,21 @@ class FBEGeneratorV2
 
     private function generateWriteHeaderMethod(array $struct): string
     {
+        $structId = $struct['id'] ?? 0;
+
         $code = "\n";
         $code .= "    /**\n";
         $code .= "     * Write struct header (Standard format)\n";
+        $code .= "     * Header: 8 bytes (4-byte size + 4-byte type)\n";
         $code .= "     */\n";
         $code .= "    public function writeHeader(): void\n";
         $code .= "    {\n";
         $code .= "        if (!(\$this->buffer instanceof \\FBE\\Common\\WriteBuffer)) {\n";
         $code .= "            throw new \\RuntimeException('Cannot write to ReadBuffer');\n";
         $code .= "        }\n\n";
-        $code .= "        \$this->buffer->writeUInt32(\$this->offset, \$this->size());\n";
+        $code .= "        // Write 8-byte header (FBE C++ spec)\n";
+        $code .= "        \$this->buffer->writeUInt32(\$this->offset, \$this->size());      // size\n";
+        $code .= "        \$this->buffer->writeUInt32(\$this->offset + 4, $structId);  // type ID\n";
         $code .= "    }\n";
 
         return $code;
