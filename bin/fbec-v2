@@ -16,24 +16,27 @@
 declare(strict_types=1);
 
 if ($argc < 3) {
-    fwrite(STDERR, "Usage: fbec-v2 <input.fbe> <output_dir> [--format=both|standard|final]\n");
+    fwrite(STDERR, "Usage: fbec-v2 <input.fbe> <output_dir> [--format=both|standard|final] [--proto]\n");
     exit(1);
 }
 
 $inputFile = $argv[1];
 $outputDir = $argv[2];
 $format = 'both'; // Default: generate both
+$generateProtocol = false;
 
-// Parse format option
+// Parse options
 for ($i = 3; $i < $argc; $i++) {
     if (str_starts_with($argv[$i], '--format=')) {
         $format = substr($argv[$i], 9);
+    } elseif ($argv[$i] === '--proto') {
+        $generateProtocol = true;
     }
 }
 
 try {
     $generator = new FBEGeneratorV2();
-    $generator->generate($inputFile, $outputDir, $format);
+    $generator->generate($inputFile, $outputDir, $format, $generateProtocol);
     echo "✓ Code generation successful!\n";
 } catch (Exception $e) {
     fwrite(STDERR, "✗ Error: {$e->getMessage()}\n");
@@ -49,7 +52,7 @@ class FBEGeneratorV2
     private string $package = '';
     private string $domain = '';
 
-    public function generate(string $inputFile, string $outputDir, string $format): void
+    public function generate(string $inputFile, string $outputDir, string $format, bool $generateProtocol = false): void
     {
         $content = file_get_contents($inputFile);
         if ($content === false) {
@@ -63,12 +66,18 @@ class FBEGeneratorV2
         $this->parse($content);
         $this->generateCode($outputDir, $format);
 
+        // Generate protocol classes if requested
+        if ($generateProtocol) {
+            $this->generateProtocol($outputDir, $format);
+        }
+
         $stats = sprintf(
-            "Generated %d enums, %d flags, %d structs (format: %s)\n",
+            "Generated %d enums, %d flags, %d structs (format: %s)%s\n",
             count($this->enums),
             count($this->flags),
             count($this->structs),
-            $format
+            $format,
+            $generateProtocol ? ' + protocol' : ''
         );
         echo $stats;
     }
@@ -716,5 +725,142 @@ class FBEGeneratorV2
         }
 
         return $size;
+    }
+
+    /**
+     * Generate protocol classes (Sender and Receiver)
+     */
+    private function generateProtocol(string $outputDir, string $format): void
+    {
+        // Determine which format to use for protocol
+        $protocolFormat = $format === 'both' ? 'final' : $format;
+        $suffix = ($protocolFormat === 'final') ? 'FinalModel' : 'Model';
+
+        // Generate Sender
+        $this->generateSender($outputDir, $protocolFormat, $suffix);
+
+        // Generate Receiver
+        $this->generateReceiver($outputDir, $protocolFormat, $suffix);
+    }
+
+    /**
+     * Generate Sender class
+     */
+    private function generateSender(string $outputDir, string $format, string $suffix): void
+    {
+        $namespace = $this->getNamespace();
+        $className = $namespace ? (explode('\\', $namespace)[count(explode('\\', $namespace)) - 1]) : 'Proto';
+        $senderClass = $className . 'Sender';
+
+        $code = "<?php\n\ndeclare(strict_types=1);";
+
+        if ($namespace) {
+            $code .= "\n\nnamespace $namespace;";
+        }
+
+        $code .= "\n\nuse FBE\\Proto\\Sender;\n\n";
+
+        $code .= "/**\n";
+        $code .= " * Protocol Sender for $className\n";
+        $code .= " * \n";
+        $code .= " * Sends messages over network/transport.\n";
+        $code .= " * Override onSend() to implement actual transmission.\n";
+        $code .= " */\n";
+        $code .= "abstract class $senderClass extends Sender\n{\n";
+
+        // Generate send methods for each struct
+        foreach ($this->structs as $struct) {
+            $name = $struct['name'];
+            $typeId = $struct['id'] ?? 0;
+            $modelClass = $name . $suffix;
+
+            $code .= "\n";
+            $code .= "    /**\n";
+            $code .= "     * Send $name message\n";
+            $code .= "     * \n";
+            $code .= "     * @param $modelClass \$model\n";
+            $code .= "     * @return int Bytes sent\n";
+            $code .= "     */\n";
+            $code .= "    public function send$name($modelClass \$model): int\n";
+            $code .= "    {\n";
+            $code .= "        return \$this->send(\$model, $typeId);\n";
+            $code .= "    }\n";
+        }
+
+        $code .= "}\n";
+
+        file_put_contents("$outputDir/$senderClass.php", $code);
+    }
+
+    /**
+     * Generate Receiver class
+     */
+    private function generateReceiver(string $outputDir, string $format, string $suffix): void
+    {
+        $namespace = $this->getNamespace();
+        $className = $namespace ? (explode('\\', $namespace)[count(explode('\\', $namespace)) - 1]) : 'Proto';
+        $receiverClass = $className . 'Receiver';
+
+        $code = "<?php\n\ndeclare(strict_types=1);";
+
+        if ($namespace) {
+            $code .= "\n\nnamespace $namespace;";
+        }
+
+        $code .= "\n\nuse FBE\\Proto\\Receiver;\n";
+        $code .= "use FBE\\Common\\ReadBuffer;\n\n";
+
+        $code .= "/**\n";
+        $code .= " * Protocol Receiver for $className\n";
+        $code .= " * \n";
+        $code .= " * Receives and dispatches messages.\n";
+        $code .= " * Override onReceive*() methods to handle messages.\n";
+        $code .= " */\n";
+        $code .= "abstract class $receiverClass extends Receiver\n{\n";
+
+        // Generate abstract onReceive methods for each struct
+        foreach ($this->structs as $struct) {
+            $name = $struct['name'];
+            $modelClass = $name . $suffix;
+
+            $code .= "\n";
+            $code .= "    /**\n";
+            $code .= "     * Handle received $name message\n";
+            $code .= "     * \n";
+            $code .= "     * @param $modelClass \$model\n";
+            $code .= "     */\n";
+            $code .= "    abstract protected function onReceive$name($modelClass \$model): void;\n";
+        }
+
+        // Generate dispatcher
+        $code .= "\n";
+        $code .= "    /**\n";
+        $code .= "     * Dispatch received message by type ID\n";
+        $code .= "     */\n";
+        $code .= "    protected function onReceive(int \$typeId, string \$data, int \$size): void\n";
+        $code .= "    {\n";
+        $code .= "        \$buffer = new ReadBuffer(\$data);\n\n";
+        $code .= "        switch (\$typeId) {\n";
+
+        foreach ($this->structs as $struct) {
+            $name = $struct['name'];
+            $typeId = $struct['id'] ?? 0;
+            $modelClass = $name . $suffix;
+
+            $code .= "            case $typeId: // $name\n";
+            $code .= "                \$model = new $modelClass(\$buffer, 8); // Skip 8-byte header\n";
+            $code .= "                \$this->onReceive$name(\$model);\n";
+            $code .= "                break;\n\n";
+        }
+
+        $code .= "            default:\n";
+        $code .= "                // Unknown message type\n";
+        $code .= "                break;\n";
+        $code .= "        }\n";
+        $code .= "    }\n";
+
+        $code .= "}\n";
+
+        file_put_contents("$outputDir/$receiverClass.php", $code);
     }
 }
