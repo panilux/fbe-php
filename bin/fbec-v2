@@ -391,8 +391,10 @@ class FBEGeneratorV2
             $offset = 4; // Header size
         }
 
+        $previousFields = [];
         foreach ($struct['fields'] as $field) {
-            $code .= $this->generateFieldAccessor($field, $format, $offset);
+            $code .= $this->generateFieldAccessor($field, $format, $offset, $previousFields);
+            $previousFields[] = $field;
             $offset += $this->getFieldSize($field, $format);
         }
 
@@ -478,7 +480,7 @@ class FBEGeneratorV2
         return null;
     }
 
-    private function generateFieldAccessor(array $field, string $format, int $offset): string
+    private function generateFieldAccessor(array $field, string $format, int $offset, array $previousFields = []): string
     {
         $fieldName = $field['name'];
         $methodName = lcfirst($fieldName);
@@ -490,7 +492,32 @@ class FBEGeneratorV2
         $code .= "     */\n";
         $code .= "    public function $methodName(): $fieldModelClass\n";
         $code .= "    {\n";
-        $code .= "        return new $fieldModelClass(\$this->buffer, \$this->offset + $offset";
+
+        // Final format with variable-size fields requires runtime offset calculation
+        if ($format === 'Final' && $this->hasVariableSizeFieldBefore($previousFields)) {
+            $code .= "        // Runtime offset calculation for Final format\n";
+            $code .= "        \$currentOffset = \$this->offset";
+
+            $calcOffset = 0;
+            foreach ($previousFields as $prevField) {
+                $prevMethodName = lcfirst($prevField['name']);
+                if ($this->isVariableSize($prevField)) {
+                    // Variable-size: must read runtime size
+                    $code .= " + $calcOffset;\n";
+                    $code .= "        \$size{$prevMethodName} = \$this->buffer->readUInt32(\$currentOffset);\n";
+                    $code .= "        \$currentOffset += 4 + \$size{$prevMethodName}";
+                    $calcOffset = 0;
+                } else {
+                    // Fixed-size: add compile-time size
+                    $calcOffset += $this->getFieldSize($prevField, $format);
+                }
+            }
+            $code .= " + $calcOffset;\n\n";
+            $code .= "        return new $fieldModelClass(\$this->buffer, \$currentOffset";
+        } else {
+            // Standard format or first field: use compile-time offset
+            $code .= "        return new $fieldModelClass(\$this->buffer, \$this->offset + $offset";
+        }
 
         // Add additional parameters for collections
         if ($field['fbeType'] === 'vector' || $field['fbeType'] === 'optional') {
@@ -505,6 +532,22 @@ class FBEGeneratorV2
         $code .= "    }\n";
 
         return $code;
+    }
+
+    private function isVariableSize(array $field): bool
+    {
+        $variableTypes = ['string', 'bytes', 'vector', 'optional', 'map', 'list', 'set', 'hash', 'array'];
+        return in_array($field['fbeType'], $variableTypes);
+    }
+
+    private function hasVariableSizeFieldBefore(array $previousFields): bool
+    {
+        foreach ($previousFields as $field) {
+            if ($this->isVariableSize($field)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private function getFieldModelClass(array $field): string
