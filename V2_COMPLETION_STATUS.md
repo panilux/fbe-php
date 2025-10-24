@@ -22,11 +22,11 @@ Built a **rock-solid, production-grade FBE PHP package** for Panilux Panel & Age
 
 ### Test Coverage
 ```
-Total Tests: 104
-├─ Unit Tests: 98
+Total Tests: 114
+├─ Unit Tests: 108
 └─ Integration Tests: 6
 
-Assertions: 273
+Assertions: 328
 Failures: 0
 Errors: 0
 ```
@@ -83,12 +83,15 @@ Vector<String> ["A","BB","CCC"]
 **Collections:**
 - [x] FieldModelVector<T> (Standard: pointer, Final: inline)
 - [x] FieldModelOptional<T> (Standard: pointer, Final: inline)
+- [x] FieldModelMap<K,V> (Standard: pointer, Final: inline)
 
 **Specialized:**
 - [x] FieldModelVectorInt32
 - [x] FieldModelVectorString
 - [x] FieldModelOptionalInt32
 - [x] FieldModelOptionalString
+- [x] FieldModelMapStringString
+- [x] FieldModelMapStringInt32
 
 ### 4. StructModel Foundation
 - [x] StructModel base class
@@ -108,6 +111,7 @@ Vector<String> ["A","BB","CCC"]
 - [x] StructModel tests (9 tests)
 - [x] Vector tests (7 tests)
 - [x] Optional tests (8 tests)
+- [x] Map tests (10 tests)
 - [x] Integration tests (6 tests)
 
 ### 7. Documentation
@@ -190,7 +194,7 @@ c76b2af feat(v2): Add UUID and Decimal types with full FBE spec compliance
 ## 🚧 Pending (Future Enhancements)
 
 ### Collections
-- [ ] FieldModelMap<K,V>
+- [x] FieldModelMap<K,V> ✅ COMPLETED
 - [ ] FieldModelSet<T>
 - [ ] FieldModelArray<T> (fixed-size)
 

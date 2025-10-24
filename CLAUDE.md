@@ -8,7 +8,7 @@ FBE (Fast Binary Encoding) for PHP - A **production-grade, rock-solid** binary s
 
 **Critical:** This is a PHP 8.4+ project that uses modern PHP features including property hooks and readonly properties.
 
-**Status:** V2 production-grade implementation complete with 104 tests, 273 assertions, full FBE spec compliance, and security hardening.
+**Status:** V2 production-grade implementation complete with 114 tests, 328 assertions, full FBE spec compliance, and security hardening.
 
 **Performance:** 5-10 μs/op (10x faster than v1), bounds checking on all operations, 20-38% size reduction with Final format.
 
@@ -16,7 +16,7 @@ FBE (Fast Binary Encoding) for PHP - A **production-grade, rock-solid** binary s
 
 ### Running Tests
 ```bash
-# Run all V2 tests (RECOMMENDED - 104 tests, 273 assertions)
+# Run all V2 tests (RECOMMENDED - 114 tests, 328 assertions)
 vendor/bin/phpunit tests/V2/ --colors=always --testdox
 
 # Run V2 unit tests
@@ -166,7 +166,8 @@ FBE\V2\Standard\          FBE\V2\Final\
 ├── FieldModelDecimal     ├── FieldModelDecimal
 ├── FieldModelTimestamp   ├── FieldModelTimestamp
 ├── FieldModelVector ★    ├── FieldModelVector ★
-└── FieldModelOptional ★  └── FieldModelOptional ★
+├── FieldModelOptional ★  ├── FieldModelOptional ★
+└── FieldModelMap ★       └── FieldModelMap ★
 ```
 
 **★ = Different implementation between Standard/Final**
@@ -192,6 +193,11 @@ FBE\V2\Standard\          FBE\V2\Final\
 **Vector<T>:**
 - Standard: Pointer-based ([4-byte pointer] → [4-byte count + elements])
 - Final: Inline ([4-byte count + elements])
+- **Final saves 4 bytes (no pointer)**
+
+**Map<K,V>:**
+- Standard: Pointer-based ([4-byte pointer] → [4-byte count + key-value pairs])
+- Final: Inline ([4-byte count + key-value pairs])
 - **Final saves 4 bytes (no pointer)**
 
 **Optional<T>:**
@@ -238,6 +244,10 @@ String "Hello" (5 bytes):
 Vector<Int32> [1,2,3]:
 ├─ Standard: 4 (ptr) + 4 (count) + 12 (data) = 20 bytes
 └─ Final:    4 (count) + 12 (data) = 16 bytes
+
+Map<String,Int32> {"x":10}:
+├─ Standard: 4 (ptr) + 4 (count) + (4+1 + 4) = 17 bytes
+└─ Final:    4 (count) + (4+1 + 4) = 13 bytes
 
 Optional<Int32> 42:
 ├─ Standard: 1 (flag) + 4 (value) = 5 bytes

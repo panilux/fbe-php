@@ -260,6 +260,25 @@ final class WriteBuffer extends Buffer
         return $pointer;
     }
 
+    /**
+     * Write raw string data (no size prefix)
+     * Helper for Map and other collection types
+     *
+     * @param int $offset Offset to write at
+     * @param string $value String value
+     * @param int $size Size to write (default: full string length)
+     */
+    public function writeString(int $offset, string $value, int $size = -1): void
+    {
+        if ($size < 0) {
+            $size = strlen($value);
+        }
+
+        if ($size > 0) {
+            $this->writeRawBytes($offset, substr($value, 0, $size));
+        }
+    }
+
     // ========================================================================
     // BYTES OPERATIONS
     // ========================================================================

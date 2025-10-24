@@ -187,6 +187,24 @@ final class ReadBuffer extends Buffer
         }
     }
 
+    /**
+     * Read raw string data (no size prefix)
+     * Helper for Map and other collection types
+     *
+     * @param int $offset Offset to read from
+     * @param int $size Size to read
+     * @return string String value
+     */
+    public function readString(int $offset, int $size): string
+    {
+        if ($size === 0) {
+            return '';
+        }
+
+        $this->checkBounds($offset, $size);
+        return substr($this->data, $this->absoluteOffset($offset), $size);
+    }
+
     // ========================================================================
     // BYTES OPERATIONS
     // ========================================================================
