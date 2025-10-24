@@ -272,6 +272,28 @@ class FBEGeneratorV2
         file_put_contents($fileName, $code);
     }
 
+    /**
+     * Convert flag expression to PHP constant references
+     * e.g., "initialized | calculated" → "self::INITIALIZED | self::CALCULATED"
+     */
+    private function convertFlagExpression(string $expression, array $flagValues): string
+    {
+        // If it's a simple hex/int value, return as-is
+        if (preg_match('/^0x[0-9a-fA-F]+$/', $expression) || is_numeric($expression)) {
+            return $expression;
+        }
+
+        // Convert flag names to constant references
+        $result = $expression;
+        foreach (array_keys($flagValues) as $flagName) {
+            // Replace flag names with self::CONSTANT_NAME
+            $constName = strtoupper(preg_replace('/([a-z])([A-Z])/', '$1_$2', $flagName));
+            $result = preg_replace('/\b' . preg_quote($flagName, '/') . '\b/', "self::$constName", $result);
+        }
+
+        return $result;
+    }
+
     private function generateFlags(array $flags, string $outputDir): void
     {
         $name = $flags['name'];
@@ -295,7 +317,12 @@ class FBEGeneratorV2
 
         foreach ($flags['values'] as $key => $val) {
             $constName = strtoupper(preg_replace('/([a-z])([A-Z])/', '$1_$2', $key));
-            $code .= "    public const $constName = $val;\n";
+
+            // Convert flag name references to proper PHP constants
+            // e.g., "initialized | calculated" → "self::INITIALIZED | self::CALCULATED"
+            $phpValue = $this->convertFlagExpression($val, $flags['values']);
+
+            $code .= "    public const $constName = $phpValue;\n";
         }
 
         // Add helper methods
