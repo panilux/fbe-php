@@ -6,6 +6,7 @@
 [![PHP Version](https://img.shields.io/badge/php-%3E%3D8.4-blue.svg)](https://php.net)
 [![Tests](https://img.shields.io/badge/tests-104%20passing-brightgreen.svg)](#testing)
 [![Coverage](https://img.shields.io/badge/assertions-273-brightgreen.svg)](#testing)
+[![C++ Compatible](https://img.shields.io/badge/C%2B%2B-100%25%20compatible-success.svg)](CPP_COMPATIBILITY_TEST.md)
 
 ## 🚀 Features
 
@@ -19,15 +20,18 @@
 - ✅ **20-38% Size Reduction** - Final format optimization
 - ✅ **Cross-Platform** - Binary compatible with Rust, Python, C++
 - ✅ **Type Safe** - Full PHP 8.4+ type declarations
+- ✅ **Code Generation** - Schema compiler (fbec) with inheritance support
+- ✅ **Default Values** - Automatic field initialization
 - ✅ **104 Tests** - Comprehensive test coverage
 
 ### Two Serialization Formats
 
 **Standard Format** - Versioning & Evolution
 - Pointer-based architecture
-- 4-byte struct headers
+- **8-byte struct headers** (size + type ID)
 - Forward/backward compatibility
 - Protocol versioning support
+- **100% FBE C++ binary compatible** ✅
 
 **Final Format** - Maximum Performance
 - Inline serialization (no pointers)
@@ -205,17 +209,16 @@ vendor/bin/phpunit --testdox
 composer test:coverage
 ```
 
-**Test Results:**
-- ✅ **211 tests passing** (100% pass rate)
-- ✅ **605 assertions**
+**Test Results (V2 Production-Grade):**
+- ✅ **104 tests passing** (100% pass rate)
+- ✅ **273 assertions**
 - ✅ Comprehensive coverage:
   - Buffer operations (primitives, security, bounds checking)
   - All FieldModel types (Standard + Final formats)
   - JSON serialization (all types)
-  - Protocol layer (Sender/Receiver, MessageRegistry)
   - Complex types (Decimal, UUID, Timestamp)
-  - Collections (Vector, Array, Map, Optional)
-  - Enums and Flags
+  - Collections (Vector, Optional)
+  - Integration tests (nested structures, cross-platform)
   - Edge cases (empty, null, large vectors)
 
 ## 🔧 Advanced Usage
@@ -304,6 +307,149 @@ $readPrice = $readField->get();
 echo $readPrice->toString(); // '999.99'
 ```
 
+## 🏗️ Code Generation
+
+FBE-PHP includes a schema compiler (`fbec`) that generates PHP models from `.fbe` schema files.
+
+### Basic Usage
+
+```bash
+# Generate PHP models from schema
+./bin/fbec schema.fbe output_directory/
+
+# Generate both Standard and Final format models
+./bin/fbec schema.fbe output_directory/ --format=both
+```
+
+### Schema Example
+
+```fbe
+// user.fbe
+package myapp
+
+enum Role : byte {
+    guest = 0;
+    user = 1;
+    admin = 2;
+}
+
+flags Permissions : byte {
+    read = 0x01;
+    write = 0x02;
+    delete = 0x04;
+    admin = read | write | delete;
+}
+
+struct User(100) {
+    [key] int32 id;
+    string username;
+    Role role = Role.user;
+    Permissions perms = Permissions.read;
+    double balance = 0.0;
+}
+```
+
+### Generated Code
+
+The compiler generates:
+
+**Enums** (PHP 8.4 backed enums):
+```php
+enum Role: int {
+    case Guest = 0;
+    case User = 1;
+    case Admin = 2;
+}
+```
+
+**Flags** (with bitwise helpers):
+```php
+final class Permissions {
+    public const READ = 0x01;
+    public const WRITE = 0x02;
+    public const DELETE = 0x04;
+    public const ADMIN = self::READ | self::WRITE | self::DELETE;
+
+    public static function hasFlag(int $flags, int $flag): bool;
+    public static function setFlag(int $flags, int $flag): int;
+    public static function clearFlag(int $flags, int $flag): int;
+}
+```
+
+**Struct Models** (with 8-byte header):
+```php
+final class UserModel extends StructModel {
+    public function size(): int { return 24; } // 8-byte header + fields
+
+    public function writeHeader(): void {
+        // Write 8-byte header: size + type
+        $this->buffer->writeUInt32($this->offset, $this->size());
+        $this->buffer->writeUInt32($this->offset + 4, 100); // struct ID
+    }
+
+    public function id(): FieldModelInt32;
+    public function username(): FieldModelString;
+    public function role(): FieldModelUInt8;
+    public function perms(): FieldModelUInt8;
+    public function balance(): FieldModelDouble;
+
+    // Initialize with default values
+    public function initializeDefaults(): void {
+        $this->role()->set(1); // Role.user
+        $this->perms()->set(0x01); // Permissions.read
+        $this->balance()->set(0.0);
+    }
+}
+```
+
+### Inheritance Support
+
+```fbe
+struct Person(100) {
+    string name;
+    int32 age;
+}
+
+struct Employee(101) : Person {
+    string company;
+    double salary;
+}
+
+struct Manager(102) : Employee {
+    int32 teamSize;
+    string department;
+}
+```
+
+Generated models support multi-level inheritance (Standard format):
+
+```php
+class PersonModel extends StructModel { /* ... */ }
+class EmployeeModel extends PersonModel { /* ... */ }
+class ManagerModel extends EmployeeModel { /* ... */ }
+
+// Usage
+$manager = new ManagerModel($buffer, 0);
+$manager->writeHeader();
+$manager->name()->set('Alice');      // Person field
+$manager->company()->set('TechCorp'); // Employee field
+$manager->teamSize()->set(12);       // Manager field
+```
+
+### Default Values
+
+Use `initializeDefaults()` to set schema-defined default values:
+
+```php
+$user = new UserModel($buffer, 0);
+$user->writeHeader();
+$user->initializeDefaults(); // Sets role=User, perms=Read, balance=0.0
+
+$user->id()->set(12345);
+$user->username()->set('alice');
+// role, perms, balance already set by defaults
+```
+
 ## 🔐 Security
 
 V2 implementation includes production-grade security features:
@@ -333,22 +479,27 @@ Benchmark results (macOS, PHP 8.4, Apple Silicon):
 - [x] Standard/Final formats
 - [x] Vector<T> collections
 - [x] Optional<T> fields
+- [x] **Code generator (fbec)** - Schema compiler with inheritance
+- [x] **Enum generation** - PHP 8.4 backed enums
+- [x] **Flags generation** - Bitwise operations support
+- [x] **Default values** - Automatic field initialization
+- [x] **Multi-level inheritance** - Person → Employee → Manager
+- [x] **C++ binary compatibility** - 100% FBE C++ compliant
 - [x] 104 comprehensive tests
 
 ### 🚧 Planned (Future)
-- [ ] Map<K,V> FieldModel
-- [ ] Set<T> FieldModel
-- [ ] Enum FieldModel
-- [ ] Flags FieldModel
-- [ ] Message/Protocol support
-- [ ] Sender/Receiver pattern
-- [ ] Code generator (fbec) V2 support
+- [ ] Map<K,V> FieldModel (runtime implementation)
+- [ ] Set<T> FieldModel (runtime implementation)
+- [ ] Message/Protocol support (code generation)
+- [ ] Sender/Receiver pattern (code generation)
+- [ ] Final format multi-level inheritance (optimization)
 
 ## 📚 Documentation
 
 - [CLAUDE.md](CLAUDE.md) - Comprehensive development guide
-- [FBE_SPEC_COMPLIANCE.md](FBE_SPEC_COMPLIANCE.md) - Spec compliance details
-- [PRODUCTION_ROADMAP.md](PRODUCTION_ROADMAP.md) - Implementation roadmap
+- [FBE_SPEC_COMPLIANCE_FINAL.md](FBE_SPEC_COMPLIANCE_FINAL.md) - Complete spec compliance analysis
+- [CPP_COMPATIBILITY_TEST.md](CPP_COMPATIBILITY_TEST.md) - C++ binary compatibility verification
+- [COMPLETION_SUMMARY.md](COMPLETION_SUMMARY.md) - V2 implementation summary
 
 ## 🤝 Cross-Platform Compatibility
 
