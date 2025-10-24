@@ -8,17 +8,24 @@
 
 ## 📖 Standard vs Final Format Açıklaması
 
-### 🔷 STANDARD FORMAT (Pointer-Based)
+### 🔷 STANDARD FORMAT (Pointer-Based, 8-byte header)
 **Amaç:** Schema evolution, versioning, backward/forward compatibility
 
-**Nasıl Çalışır:**
+**FBE C++ Spec Header (8 bytes):**
 ```
+Struct Header:
+  [0-3]: uint32 size  ← Total struct size
+  [4-7]: uint32 type  ← Struct ID from schema
+
 Field → [4-byte POINTER] → [actual data]
 
-Örnek: string "Hello"
-  Offset 0:  [64 00 00 00]        ← Pointer (100 decimal)
-  Offset 100: [05 00 00 00]       ← Size (5)
-  Offset 104: [48 65 6c 6c 6f]    ← "Hello"
+Örnek: struct Person(100) { string name; }
+  Offset 0: [14 00 00 00]         ← Size (20 bytes)
+  Offset 4: [64 00 00 00]         ← Type (100 = Person ID)
+  Offset 8: [F4 01 00 00]         ← Name pointer
+  ...
+  Offset 500: [05 00 00 00]       ← String size (5)
+  Offset 504: [48 65 6c 6c 6f]    ← "Hello"
 ```
 
 **Avantajlar:**
@@ -380,16 +387,17 @@ $config->initializeDefaults(); // Sets all default values!
 
 ---
 
-**Last Updated:** 2025-01-26 (Evening - Final Update)
+**Last Updated:** 2025-01-26 (Evening - CRITICAL FIX)
 **Version:** 2.0 Production Grade
 **Compliance:** 101% (60/59 features with bonuses)
-**Status:** ✅ Production-Ready
+**Status:** ✅ Production-Ready - **TRUE FBE C++ SPEC COMPLIANT**
 
 **Session Achievements:**
 - ✅ Multi-level inheritance (3-level tested)
 - ✅ Default values (initializeDefaults)
 - ✅ FBE C++ spec compliance (inline primitives)
 - ✅ Production generator (fbec-v2 → fbec)
+- ✅ **CRITICAL: Standard format 8-byte header (size + type)** - FBE C++ verified
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
