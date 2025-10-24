@@ -35,11 +35,11 @@ composer test:coverage
 ### Code Generation
 ```bash
 # Generate PHP code from .fbe schema (V2 FieldModel-based)
-bin/fbec-v2 schema.fbe output_directory/ [--format=both|standard|final]
+bin/fbec schema.fbe output_directory/ [--format=both|standard|final]
 
 # Examples
-bin/fbec-v2 test_schema.fbe generated/           # Generate both formats
-bin/fbec-v2 schema.fbe output/ --format=final   # Generate Final format only
+bin/fbec test_schema.fbe generated/           # Generate both formats
+bin/fbec schema.fbe output/ --format=final   # Generate Final format only
 
 # Test generated code
 php test_generator.php
@@ -105,16 +105,18 @@ src/FBE/
 
 ```php
 // Namespace: FBE\Standard\
-// Format: [4-byte struct size header][fields with pointers]
+// Format: [8-byte header: size + type][fields with pointers]
 
 class PersonModel extends StructModel {
     public function writeHeader(): void {
-        $this->buffer->writeUInt32($this->offset, STRUCT_SIZE);
+        // Write 8-byte header (FBE C++ spec)
+        $this->buffer->writeUInt32($this->offset, $this->size());      // size
+        $this->buffer->writeUInt32($this->offset + 4, 100);  // type ID
     }
 
     public function name(): FieldModelString {
         // String uses 4-byte pointer → data
-        return new FieldModelString($this->buffer, $this->offset + 4);
+        return new FieldModelString($this->buffer, $this->offset + 8);
     }
 }
 ```
@@ -280,13 +282,13 @@ Enum OrderStatus::Pending (int8):
 └─ Final:    1 byte (identical)
 ```
 
-### Code Generator (bin/fbec-v2)
+### Code Generator (bin/fbec)
 
 Modern FieldModel-based code generator that parses `.fbe` schema files and generates production-ready PHP classes.
 
 **Usage:**
 ```bash
-./bin/fbec-v2 <input.fbe> <output_dir> [--format=both|standard|final]
+./bin/fbec <input.fbe> <output_dir> [--format=both|standard|final]
 ```
 
 **Parser capabilities:**
@@ -309,7 +311,7 @@ Modern FieldModel-based code generator that parses `.fbe` schema files and gener
 
 **Example:**
 ```bash
-./bin/fbec-v2 test_schema.fbe generated/
+./bin/fbec test_schema.fbe generated/
 # Generates: OrderSide.php (enum), OrderFlags.php (flags),
 #            OrderModel.php + OrderFinalModel.php (both formats)
 ```
@@ -411,28 +413,31 @@ class Employee extends Person {
    - ✅ Flags: FieldModelFlags with bitwise operations
 
 4. **StructModel Foundation**
-   - ✅ Standard format with 4-byte header
+   - ✅ Standard format with 8-byte header (size + type)
    - ✅ Final format without header
    - ✅ Example implementations (Person, Order, Account, Trade)
 
 5. **Testing**
-   - ✅ 168 tests, 503 assertions
+   - ✅ 104 tests, 273 assertions (V2 production-grade)
    - ✅ Unit tests covering all FieldModel types
    - ✅ Integration tests for complex structures
    - ✅ Size comparison tests (Standard vs Final)
    - ✅ Edge case coverage (empty, null, large values)
-   - ✅ Array/List/Set/Hash collection tests
+   - ✅ Vector/Optional collection tests
    - ✅ Performance benchmarks (5-10 μs/op)
+   - ✅ C++ binary compatibility verified
 
 6. **Code Generation**
-   - ✅ fbec-v2 generator with FieldModel pattern
+   - ✅ fbec generator with FieldModel pattern
    - ✅ Standard + Final format generation
-   - ✅ Enum generation (PHP 8.1+ BackedEnum)
+   - ✅ Enum generation (PHP 8.4 backed enums)
    - ✅ Flags generation with bitwise helpers
    - ✅ Namespace mapping (domain.package)
    - ✅ Automatic size()/verify() generation
    - ✅ Complex type support (UUID, Decimal, etc.)
-   - ✅ Collection support (Vector, Optional, Map)
+   - ✅ Collection support (Vector, Optional)
+   - ✅ **Multi-level inheritance** (Person → Employee → Manager)
+   - ✅ **Default values** (initializeDefaults method)
 
 ### 🚧 Pending (Future Enhancements)
 
@@ -447,9 +452,9 @@ class Employee extends Person {
    - ⏳ SIMD for bulk operations
 
 3. **Generator Enhancements**
-   - ⏳ Nested struct handling
-   - ⏳ Default value initialization
+   - ⏳ Nested struct FieldModel generation
    - ⏳ Validation rules generation
+   - ⏳ Final format multi-level inheritance
 
 ### ✅ Production-Grade Implementation
 
