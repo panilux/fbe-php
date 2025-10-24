@@ -409,6 +409,19 @@ class FBEGeneratorV2
             $offset += $this->getFieldSize($field, $format);
         }
 
+        // Generate initializeDefaults() method if any field has default value
+        $hasDefaults = false;
+        foreach ($struct['fields'] as $field) {
+            if (!empty($field['defaultValue'])) {
+                $hasDefaults = true;
+                break;
+            }
+        }
+
+        if ($hasDefaults) {
+            $code .= $this->generateInitializeDefaultsMethod($struct, $format);
+        }
+
         $code .= "}\n";
 
         return $code;
@@ -824,6 +837,56 @@ class FBEGeneratorV2
         $code .= "    }\n";
 
         return $code;
+    }
+
+    private function generateInitializeDefaultsMethod(array $struct, string $format): string
+    {
+        $code = "\n";
+        $code .= "    /**\n";
+        $code .= "     * Initialize fields with default values\n";
+        $code .= "     */\n";
+        $code .= "    public function initializeDefaults(): void\n";
+        $code .= "    {\n";
+        $code .= "        if (!(\$this->buffer instanceof \\FBE\\Common\\WriteBuffer)) {\n";
+        $code .= "            throw new \\RuntimeException('Cannot initialize defaults on ReadBuffer');\n";
+        $code .= "        }\n\n";
+
+        foreach ($struct['fields'] as $field) {
+            if (!empty($field['defaultValue'])) {
+                $fieldName = lcfirst($field['name']);
+                $defaultValue = $field['defaultValue'];
+
+                // Convert default value to PHP syntax
+                $phpValue = $this->convertDefaultValueToPhp($defaultValue, $field['fbeType']);
+
+                $code .= "        \$this->{$fieldName}()->set($phpValue);\n";
+            }
+        }
+
+        $code .= "    }\n";
+
+        return $code;
+    }
+
+    private function convertDefaultValueToPhp(string $value, string $type): string
+    {
+        // Remove quotes if string literal
+        if (($value[0] ?? '') === '"' && substr($value, -1) === '"') {
+            return $value; // Keep quotes for strings
+        }
+
+        // Boolean
+        if ($value === 'true' || $value === 'false') {
+            return $value;
+        }
+
+        // Numeric
+        if (is_numeric($value)) {
+            return $value;
+        }
+
+        // Default: treat as string
+        return "\"$value\"";
     }
 
     private function calculateMinimumSize(array $fields): int
