@@ -8,7 +8,7 @@ FBE (Fast Binary Encoding) for PHP - A **production-grade, rock-solid** binary s
 
 **Critical:** This is a PHP 8.4+ project that uses modern PHP features including property hooks and readonly properties.
 
-**Status:** V2 production-grade implementation complete with 114 tests, 328 assertions, full FBE spec compliance, and security hardening.
+**Status:** V2 production-grade implementation complete with 126 tests, 365 assertions, full FBE spec compliance, and security hardening.
 
 **Performance:** 5-10 μs/op (10x faster than v1), bounds checking on all operations, 20-38% size reduction with Final format.
 
@@ -16,7 +16,7 @@ FBE (Fast Binary Encoding) for PHP - A **production-grade, rock-solid** binary s
 
 ### Running Tests
 ```bash
-# Run all V2 tests (RECOMMENDED - 114 tests, 328 assertions)
+# Run all V2 tests (RECOMMENDED - 126 tests, 365 assertions)
 vendor/bin/phpunit tests/V2/ --colors=always --testdox
 
 # Run V2 unit tests
@@ -167,7 +167,9 @@ FBE\V2\Standard\          FBE\V2\Final\
 ├── FieldModelTimestamp   ├── FieldModelTimestamp
 ├── FieldModelVector ★    ├── FieldModelVector ★
 ├── FieldModelOptional ★  ├── FieldModelOptional ★
-└── FieldModelMap ★       └── FieldModelMap ★
+├── FieldModelMap ★       ├── FieldModelMap ★
+├── FieldModelSide        ├── FieldModelSide (enum)
+└── FieldModelOrderStatus └── FieldModelOrderStatus (enum)
 ```
 
 **★ = Different implementation between Standard/Final**
@@ -204,6 +206,11 @@ FBE\V2\Standard\          FBE\V2\Final\
 - Standard: [1-byte flag + pointer or value]
 - Final: [1-byte flag + inline value]
 - **Final is more compact for strings**
+
+**Enum:**
+- Standard: Inline (underlying type: int8, int16, int32, etc.)
+- Final: Inline (identical to Standard)
+- **No difference** (enums are always fixed-size)
 
 ### FBE Binary Format Rules (V2)
 
@@ -256,6 +263,14 @@ Optional<Int32> 42:
 Optional<String> "Hi":
 ├─ Standard: 1 (flag) + 4 (ptr) + 4 (size) + 2 (data) = 11 bytes
 └─ Final:    1 (flag) + 4 (size) + 2 (data) = 7 bytes
+
+Enum Side::Buy (int32):
+├─ Standard: 4 bytes (inline)
+└─ Final:    4 bytes (identical)
+
+Enum OrderStatus::Pending (int8):
+├─ Standard: 1 byte (inline, compact!)
+└─ Final:    1 byte (identical)
 ```
 
 ### Code Generator (bin/fbec)
