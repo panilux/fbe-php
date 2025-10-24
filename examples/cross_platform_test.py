@@ -19,7 +19,7 @@ from typing import Optional
 
 
 class ReadBuffer:
-    """Simple FBE ReadBuffer implementation for verification"""
+    """Simple FBE ReadBuffer for Final format (inline, no pointers)"""
 
     def __init__(self, data: bytes):
         self.data = data

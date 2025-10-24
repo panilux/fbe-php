@@ -14,7 +14,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use FBE\Common\WriteBuffer;
-use FBE\Standard\{
+use FBE\Final\{
     FieldModelInt32,
     FieldModelInt64,
     FieldModelFloat,
@@ -32,8 +32,9 @@ use FBE\Standard\{
 };
 use FBE\Types\{Uuid, Decimal};
 
-// Create buffer - DO NOT pre-allocate, let it grow naturally
-$buffer = new WriteBuffer(0);  // Start empty
+// Create buffer - Final format is inline, no pointers!
+$buffer = new WriteBuffer();
+$buffer->allocate(500);  // Pre-allocate to avoid issues
 $offset = 0;
 
 // Test 1: Primitives
