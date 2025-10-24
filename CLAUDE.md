@@ -16,16 +16,16 @@ FBE (Fast Binary Encoding) for PHP - A **production-grade, rock-solid** binary s
 
 ### Running Tests
 ```bash
-# Run all V2 tests (RECOMMENDED - 159 tests, 487 assertions)
-vendor/bin/phpunit tests/V2/ --colors=always --testdox
+# Run all tests (RECOMMENDED - 168 tests, 503 assertions)
+vendor/bin/phpunit --colors=always --testdox
 
-# Run V2 unit tests
-vendor/bin/phpunit tests/V2/Unit/
+# Run unit tests
+vendor/bin/phpunit tests/Unit/
 
-# Run V2 integration tests
-vendor/bin/phpunit tests/V2/Integration/
+# Run integration tests
+vendor/bin/phpunit tests/Integration/
 
-# Run all tests (including legacy v1)
+# Or use composer
 composer test
 
 # Run with coverage
@@ -34,11 +34,15 @@ composer test:coverage
 
 ### Code Generation
 ```bash
-# Generate PHP code from .fbe schema
-bin/fbec schema.fbe output_directory/
+# Generate PHP code from .fbe schema (V2 FieldModel-based)
+bin/fbec-v2 schema.fbe output_directory/ [--format=both|standard|final]
 
-# Example
-bin/fbec examples/user.fbe generated/
+# Examples
+bin/fbec-v2 test_schema.fbe generated/           # Generate both formats
+bin/fbec-v2 schema.fbe output/ --format=final   # Generate Final format only
+
+# Test generated code
+php test_generator.php
 ```
 
 ### Dependencies
@@ -52,7 +56,7 @@ composer dump-autoload    # Regenerate autoloader
 ### Directory Structure
 
 ```
-src/FBE/V2/
+src/FBE/
 ├── Common/                  # Shared base classes
 │   ├── Buffer.php          # Base buffer with bounds checking
 │   ├── WriteBuffer.php     # Write operations (9.93 μs/op)
@@ -60,14 +64,15 @@ src/FBE/V2/
 │   ├── FieldModel.php      # Base for field models
 │   └── StructModel.php     # Base for struct models
 ├── Standard/                # Standard format (pointer-based, versioning)
-│   ├── FieldModel*.php     # All field models
+│   ├── FieldModel*.php     # All field models (40+ types)
 │   └── ...
 ├── Final/                   # Final format (inline, compact)
-│   ├── FieldModel*.php     # All field models
+│   ├── FieldModel*.php     # All field models (40+ types)
 │   └── ...
 ├── Types/                   # Complex types
 │   ├── Uuid.php            # RFC 4122 big-endian ✅
-│   └── Decimal.php         # 96-bit GMP precision ✅
+│   ├── Decimal.php         # 96-bit GMP precision ✅
+│   └── State.php           # Example flags type ✅
 └── Exceptions/              # Exception hierarchy
     ├── FBEException.php
     ├── BufferException.php
@@ -76,30 +81,30 @@ src/FBE/V2/
 
 ### Buffer System (Security Hardened)
 
-**V2 introduces production-grade buffers with security-critical bounds checking:**
+**Production-grade buffers with security-critical bounds checking:**
 
-- **WriteBuffer** (`src/FBE/V2/Common/WriteBuffer.php`):
-  - Performance: **9.93 μs/op** (10x faster than v1)
+- **WriteBuffer** (`src/FBE/Common/WriteBuffer.php`):
+  - Performance: **9.93 μs/op** (10x faster than legacy)
   - Bulk operations using `substr_replace`
   - Automatic buffer growth (2x expansion)
   - Bounds checking on EVERY write operation
   - Throws `BufferOverflowException` on overflow
 
-- **ReadBuffer** (`src/FBE/V2/Common/ReadBuffer.php`):
-  - Performance: **5.50 μs/op** (5x faster than v1)
+- **ReadBuffer** (`src/FBE/Common/ReadBuffer.php`):
+  - Performance: **5.50 μs/op** (5x faster than legacy)
   - Immutable, zero-copy reads
   - Bounds checking on EVERY read operation
   - Protection against malicious size values
   - Security-critical validation
 
-### Serialization Patterns (V2)
+### Serialization Patterns
 
-**V2 uses TWO distinct serialization formats:**
+**FBE uses TWO distinct serialization formats:**
 
 #### 1. Standard Format (Pointer-Based, Versioning Support)
 
 ```php
-// Namespace: FBE\V2\Standard\
+// Namespace: FBE\Standard\
 // Format: [4-byte struct size header][fields with pointers]
 
 class PersonModel extends StructModel {
@@ -124,7 +129,7 @@ class PersonModel extends StructModel {
 #### 2. Final Format (Inline, Maximum Compactness)
 
 ```php
-// Namespace: FBE\V2\Final\
+// Namespace: FBE\Final\
 // Format: [fields inline, no header]
 
 class PersonFinalModel extends StructModel {
@@ -151,10 +156,10 @@ Person {name: "Alice", age: 30}
 
 ### FieldModel Pattern (Type-Safe Fields)
 
-**V2 FieldModel classes are split by format:**
+**FieldModel classes are split by format (40+ types total):**
 
 ```
-FBE\V2\Standard\          FBE\V2\Final\
+FBE\Standard\             FBE\Final\
 ├── FieldModelBool        ├── FieldModelBool
 ├── FieldModelInt32       ├── FieldModelInt32
 ├── FieldModelInt64       ├── FieldModelInt64
@@ -168,8 +173,10 @@ FBE\V2\Standard\          FBE\V2\Final\
 ├── FieldModelVector ★    ├── FieldModelVector ★
 ├── FieldModelOptional ★  ├── FieldModelOptional ★
 ├── FieldModelMap ★       ├── FieldModelMap ★
-├── FieldModelSide        ├── FieldModelSide (enum)
-└── FieldModelOrderStatus └── FieldModelOrderStatus (enum)
+├── FieldModelArray ★     ├── FieldModelArray ★
+├── FieldModelList ★      ├── FieldModelList ★
+├── FieldModelSet ★       ├── FieldModelSet ★
+└── FieldModelHash ★      └── FieldModelHash ★
 ```
 
 **★ = Different implementation between Standard/Final**
@@ -273,29 +280,44 @@ Enum OrderStatus::Pending (int8):
 └─ Final:    1 byte (identical)
 ```
 
-### Code Generator (bin/fbec)
+### Code Generator (bin/fbec-v2)
 
-Parses `.fbe` schema files and generates PHP classes:
+Modern FieldModel-based code generator that parses `.fbe` schema files and generates production-ready PHP classes.
+
+**Usage:**
+```bash
+./bin/fbec-v2 <input.fbe> <output_dir> [--format=both|standard|final]
+```
 
 **Parser capabilities:**
-- Enums: `enum Name : type { VALUE = n; }`
-- Flags: `flags Name : type { FLAG = 0x01; }`
-- Structs: `struct Name(id)? (: BaseStruct)? { fields }`
+- Enums: `enum Name : type { VALUE = n; }` → PHP 8.1+ BackedEnum
+- Flags: `flags Name : type { FLAG = 0x01; }` → Class with constants + bitwise helpers
+- Structs: `struct Name(id)? (: BaseStruct)? { fields }` → StructModel with FieldModel accessors
 - Inheritance: Detects `: BaseClass` and generates `extends`
-- Key fields: `[key]` attribute for hash map keys
-- Default values: `field = value` syntax
+- Key fields: `[key]` attribute detection (ready for hash map keys)
+- Namespace mapping: `domain.package` → `Com\Example\Package`
 
 **Generated code includes:**
-- Public properties with PHP type hints
-- Constructor with default initialization
-- `serialize(WriteBuffer)` method
-- `deserialize(ReadBuffer)` static method
-- `getKey()` and `equals()` for structs with `[key]` fields
+- FieldModel-based field accessors (type-safe serialization)
+- `size()` method (calculated struct size)
+- `verify()` method (validates struct integrity)
+- `writeHeader()` method (Standard format only)
+- Both Standard (pointer-based) and Final (inline) formats
+- Proper enum handling (uses backing type's FieldModel)
+- Complex type support (UUID, Decimal, Timestamp, etc.)
+- Collection support (Vector, Optional, Map)
 
-**Limitations:**
-- Nested struct serialization is basic
-- Collection field handling is simplified
-- No FinalModel generation (manual only)
+**Example:**
+```bash
+./bin/fbec-v2 test_schema.fbe generated/
+# Generates: OrderSide.php (enum), OrderFlags.php (flags),
+#            OrderModel.php + OrderFinalModel.php (both formats)
+```
+
+**Test validation:**
+- Run `php test_generator.php` to verify generated code
+- All generated models are production-ready
+- 100% compatible with FBE library
 
 ## Cross-Platform Compatibility
 
@@ -310,13 +332,13 @@ V2 implementation follows the FBE specification exactly, ensuring cross-platform
 
 ### Adding New Type Support
 
-1. **Add buffer methods** to `src/FBE/V2/Common/ReadBuffer.php` and `WriteBuffer.php`:
+1. **Add buffer methods** to `src/FBE/Common/ReadBuffer.php` and `WriteBuffer.php`:
 ```php
 public function readNewType(int $offset): mixed { }
 public function writeNewType(int $offset, mixed $value): void { }
 ```
 
-2. **Create FieldModel** in both `src/FBE/V2/Standard/` and `src/FBE/V2/Final/`:
+2. **Create FieldModel** in both `src/FBE/Standard/` and `src/FBE/Final/`:
 ```php
 final class FieldModelNewType extends FieldModel {
     public function size(): int { return N; }
@@ -325,7 +347,7 @@ final class FieldModelNewType extends FieldModel {
 }
 ```
 
-3. **Add tests** in `tests/V2/Unit/`:
+3. **Add tests** in `tests/Unit/`:
    - Test Standard format serialization
    - Test Final format serialization
    - Test edge cases (empty, null, large values)
@@ -358,10 +380,10 @@ class Employee extends Person {
 
 ### Testing New Features
 
-1. Create PHPUnit test file in `tests/V2/Unit/` or `tests/V2/Integration/`
+1. Create PHPUnit test file in `tests/Unit/` or `tests/Integration/`
 2. Extend `PHPUnit\Framework\TestCase`
 3. Use PHPUnit assertions for validation
-4. Run tests with `vendor/bin/phpunit tests/V2/`
+4. Run tests with `vendor/bin/phpunit`
 5. Aim for comprehensive test coverage
 
 ## V2 Implementation Status
@@ -380,62 +402,67 @@ class Employee extends Person {
    - ✅ Timestamp: 64-bit nanoseconds
    - ✅ All primitive types
 
-3. **FieldModel Classes (30+ types)**
+3. **FieldModel Classes (40+ types)**
    - ✅ Standard format (pointer-based)
    - ✅ Final format (inline)
    - ✅ Primitives: Bool, Int8-64, UInt8-64, Float, Double
    - ✅ Complex: String, Bytes, UUID, Decimal, Timestamp
-   - ✅ Collections: Vector<T>
-   - ✅ Optionals: Optional<T>
+   - ✅ Collections: Vector<T>, Optional<T>, Map<K,V>, Array<T>, List<T>, Set<T>, Hash<K,V>
+   - ✅ Flags: FieldModelFlags with bitwise operations
 
 4. **StructModel Foundation**
    - ✅ Standard format with 4-byte header
    - ✅ Final format without header
-   - ✅ Example implementations (Person, Order)
+   - ✅ Example implementations (Person, Order, Account, Trade)
 
 5. **Testing**
-   - ✅ 104 tests, 273 assertions
-   - ✅ Unit tests (98 tests)
-   - ✅ Integration tests (6 tests)
-   - ✅ Size comparison tests
-   - ✅ Edge case coverage (empty, null)
-   - ✅ Large vector tests (100 elements)
+   - ✅ 168 tests, 503 assertions
+   - ✅ Unit tests covering all FieldModel types
+   - ✅ Integration tests for complex structures
+   - ✅ Size comparison tests (Standard vs Final)
+   - ✅ Edge case coverage (empty, null, large values)
+   - ✅ Array/List/Set/Hash collection tests
+   - ✅ Performance benchmarks (5-10 μs/op)
+
+6. **Code Generation**
+   - ✅ fbec-v2 generator with FieldModel pattern
+   - ✅ Standard + Final format generation
+   - ✅ Enum generation (PHP 8.1+ BackedEnum)
+   - ✅ Flags generation with bitwise helpers
+   - ✅ Namespace mapping (domain.package)
+   - ✅ Automatic size()/verify() generation
+   - ✅ Complex type support (UUID, Decimal, etc.)
+   - ✅ Collection support (Vector, Optional, Map)
 
 ### 🚧 Pending (Future Enhancements)
 
-1. **Collections**
-   - ⏳ Map<K,V> FieldModel
-   - ⏳ Array<T> FieldModel (fixed-size)
-   - ⏳ Set<T> FieldModel
-
-2. **Advanced Features**
-   - ⏳ Enum FieldModel
-   - ⏳ Flags FieldModel
+1. **Advanced Features**
    - ⏳ Message/Protocol support
    - ⏳ Sender/Receiver pattern
-
-3. **Code Generation**
-   - ⏳ Update fbec for V2 namespace
-   - ⏳ Auto-generate Standard/Final models
    - ⏳ Schema evolution support
 
-4. **Performance**
+2. **Performance**
    - ⏳ Memory pool allocators
    - ⏳ Zero-copy optimizations
    - ⏳ SIMD for bulk operations
 
-### ✅ V1 Code Removed
+3. **Generator Enhancements**
+   - ⏳ Nested struct handling
+   - ⏳ Default value initialization
+   - ⏳ Validation rules generation
 
-V1 legacy code has been removed from this branch. All development should use V2:
-- `src/FBE/V2/Common/ReadBuffer.php` - Security-hardened with bounds checking
-- `src/FBE/V2/Common/WriteBuffer.php` - 10x faster with bulk operations
-- `src/FBE/V2/Standard/*` - Pointer-based format with versioning
-- `src/FBE/V2/Final/*` - Inline format for maximum compactness
+### ✅ Production-Grade Implementation
+
+All development uses the production-grade FBE implementation:
+- `src/FBE/Common/ReadBuffer.php` - Security-hardened with bounds checking
+- `src/FBE/Common/WriteBuffer.php` - 10x faster with bulk operations
+- `src/FBE/Standard/*` - Pointer-based format with versioning
+- `src/FBE/Final/*` - Inline format for maximum compactness
 
 ## File Structure
 
 ```
-src/FBE/V2/                  # V2 Production-Grade Implementation
+src/FBE/                     # Production-Grade Implementation
 ├── Common/                  # Shared base classes
 │   ├── Buffer.php          # Base buffer with bounds checking
 │   ├── WriteBuffer.php     # Write operations (9.93 μs/op)
@@ -468,7 +495,7 @@ src/FBE/V2/                  # V2 Production-Grade Implementation
     ├── BufferException.php
     └── BufferOverflowException.php
 
-tests/V2/                    # PHPUnit test suite
+tests/                       # PHPUnit test suite
 ├── Unit/                    # Unit tests (153 tests)
 │   ├── WriteBufferTest.php
 │   ├── ReadBufferTest.php
