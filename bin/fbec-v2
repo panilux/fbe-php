@@ -365,14 +365,20 @@ class FBEGeneratorV2
 
         // Class declaration
         $extendsClause = '';
+        $finalKeyword = 'final ';
+
         if (!empty($struct['baseStruct'])) {
             $baseClass = $this->resolveBaseClass($struct['baseStruct']) . $suffix;
             $extendsClause = " extends $baseClass";
+            $finalKeyword = ''; // Don't use final for inherited structs
         } else {
             $extendsClause = " extends StructModel";
+            // Check if this struct is used as a base class
+            $isBaseClass = $this->isUsedAsBaseClass($struct['name']);
+            $finalKeyword = $isBaseClass ? '' : 'final ';
         }
 
-        $code .= "final class $className$extendsClause\n{\n";
+        $code .= "{$finalKeyword}class $className$extendsClause\n{\n";
 
         // Generate size() method
         $code .= $this->generateSizeMethod($struct, $format);
@@ -389,6 +395,11 @@ class FBEGeneratorV2
         $offset = 0;
         if ($format === 'Standard') {
             $offset = 4; // Header size
+        }
+
+        // Add parent fields offset if inheritance is used
+        if (!empty($struct['baseStruct'])) {
+            $offset += $this->getParentFieldsSize($struct['baseStruct'], $format);
         }
 
         $previousFields = [];
@@ -601,14 +612,7 @@ class FBEGeneratorV2
 
     private function getFieldSize(array $field, string $format): int
     {
-        // In Standard format, most fields are 4-byte pointers
-        // In Final format, size varies
-
-        if ($format === 'Standard') {
-            return 4; // Pointer
-        }
-
-        // Final format - inline sizes
+        // Fixed-size primitive types (INLINE in both formats)
         $sizes = [
             'bool' => 1,
             'byte' => 1,
@@ -628,11 +632,16 @@ class FBEGeneratorV2
         ];
 
         if (isset($sizes[$field['fbeType']])) {
+            // Primitive types are INLINE in both Standard and Final
             return $sizes[$field['fbeType']];
         }
 
-        // Variable size for string, bytes, vectors, etc.
-        return 4; // Minimum: size prefix
+        // Variable-size types (string, bytes, vector, optional, map, etc.)
+        if ($format === 'Standard') {
+            return 4; // Pointer in Standard format
+        } else {
+            return 4; // Minimum: size prefix in Final format
+        }
     }
 
     private function getNamespace(): string
@@ -664,6 +673,81 @@ class FBEGeneratorV2
         return $baseStruct;
     }
 
+    private function isUsedAsBaseClass(string $structName): bool
+    {
+        // Check if any struct extends this struct
+        foreach ($this->structs as $struct) {
+            if (!empty($struct['baseStruct'])) {
+                $baseClass = $this->resolveBaseClass($struct['baseStruct']);
+                if ($baseClass === $structName) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private function getParentFieldsSize(string $baseStructName, string $format): int
+    {
+        // Find the parent struct
+        $baseStructName = $this->resolveBaseClass($baseStructName);
+        $parentStruct = null;
+
+        foreach ($this->structs as $struct) {
+            if ($struct['name'] === $baseStructName) {
+                $parentStruct = $struct;
+                break;
+            }
+        }
+
+        if ($parentStruct === null) {
+            return 0; // Parent not found
+        }
+
+        // Calculate total size of parent fields (recursively if parent also has a parent)
+        $totalSize = 0;
+
+        // Add grandparent fields size if exists
+        if (!empty($parentStruct['baseStruct'])) {
+            $totalSize += $this->getParentFieldsSize($parentStruct['baseStruct'], $format);
+        }
+
+        // Add parent's own fields
+        foreach ($parentStruct['fields'] as $field) {
+            $totalSize += $this->getFieldSize($field, $format);
+        }
+
+        return $totalSize;
+    }
+
+    private function getTotalFieldCount(string $baseStructName): int
+    {
+        // Find the parent struct
+        $baseStructName = $this->resolveBaseClass($baseStructName);
+        $parentStruct = null;
+
+        foreach ($this->structs as $struct) {
+            if ($struct['name'] === $baseStructName) {
+                $parentStruct = $struct;
+                break;
+            }
+        }
+
+        if ($parentStruct === null) {
+            return 0; // Parent not found
+        }
+
+        // Calculate total field count (recursively if parent also has a parent)
+        $totalCount = count($parentStruct['fields']);
+
+        // Add grandparent fields count if exists
+        if (!empty($parentStruct['baseStruct'])) {
+            $totalCount += $this->getTotalFieldCount($parentStruct['baseStruct']);
+        }
+
+        return $totalCount;
+    }
+
     private function generateSizeMethod(array $struct, string $format): string
     {
         $code = "\n";
@@ -674,11 +758,22 @@ class FBEGeneratorV2
         $code .= "    {\n";
 
         if ($format === 'Standard') {
-            // Standard format: header + all fields are 4-byte pointers
+            // Standard format: header + actual field sizes (primitives inline, variables pointer)
             $headerSize = 4;
-            $fieldCount = count($struct['fields']);
-            $totalSize = $headerSize + ($fieldCount * 4);
-            $code .= "        return $totalSize; // Header + $fieldCount fields × 4 bytes\n";
+
+            // Calculate total size of own fields
+            $fieldsSize = 0;
+            foreach ($struct['fields'] as $field) {
+                $fieldsSize += $this->getFieldSize($field, 'Standard');
+            }
+
+            // Add parent fields size if inheritance is used
+            if (!empty($struct['baseStruct'])) {
+                $fieldsSize += $this->getParentFieldsSize($struct['baseStruct'], 'Standard');
+            }
+
+            $totalSize = $headerSize + $fieldsSize;
+            $code .= "        return $totalSize; // Header + fields\n";
         } else {
             // Final format: sum of minimum field sizes
             $code .= "        return " . $this->calculateMinimumSize($struct['fields']) . ";\n";
