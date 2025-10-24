@@ -16,9 +16,6 @@ final class FieldModelUuid extends FieldModel
 
     public function get(): Uuid
     {
-        if (!($this->buffer instanceof ReadBuffer)) {
-            throw new \RuntimeException('Cannot read from WriteBuffer');
-        }
         return $this->buffer->readUuid($this->offset);
     }
 
@@ -28,5 +25,18 @@ final class FieldModelUuid extends FieldModel
             throw new \RuntimeException('Cannot write to ReadBuffer');
         }
         $this->buffer->writeUuid($this->offset, $uuid);
+    }
+
+    public function toJson(): string
+    {
+        return $this->get()->toString();
+    }
+
+    public function fromJson(mixed $value): void
+    {
+        if (!is_string($value)) {
+            throw new \InvalidArgumentException('Expected UUID string, got ' . get_debug_type($value));
+        }
+        $this->set(new Uuid($value));
     }
 }

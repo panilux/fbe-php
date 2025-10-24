@@ -12,9 +12,6 @@ final class FieldModelBool extends FieldModel
 
     public function get(): bool
     {
-        if (!($this->buffer instanceof ReadBuffer)) {
-            throw new \RuntimeException('Cannot read from WriteBuffer');
-        }
         return $this->buffer->readBool($this->offset);
     }
 
@@ -24,5 +21,18 @@ final class FieldModelBool extends FieldModel
             throw new \RuntimeException('Cannot write to ReadBuffer');
         }
         $this->buffer->writeBool($this->offset, $value);
+    }
+
+    public function toJson(): bool
+    {
+        return $this->get();
+    }
+
+    public function fromJson(mixed $value): void
+    {
+        if (!is_bool($value)) {
+            throw new \InvalidArgumentException('Expected bool, got ' . get_debug_type($value));
+        }
+        $this->set($value);
     }
 }

@@ -69,9 +69,6 @@ abstract class FieldModelMap extends FieldModel
      */
     public function get(): array
     {
-        if (!($this->buffer instanceof ReadBuffer)) {
-            throw new \RuntimeException('Cannot read from WriteBuffer');
-        }
 
         $count = $this->buffer->readUInt32($this->offset);
         $result = [];

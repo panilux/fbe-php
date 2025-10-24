@@ -33,9 +33,6 @@ final class FieldModelHashStringInt32 extends FieldModelHash
 
     public function get(): array
     {
-        if (!($this->buffer instanceof ReadBuffer)) {
-            throw new \RuntimeException('Buffer is not readable');
-        }
 
         // Read main pointer
         $mainPointer = $this->buffer->readUInt32($this->offset);

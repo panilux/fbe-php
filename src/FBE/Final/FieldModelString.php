@@ -25,9 +25,6 @@ final class FieldModelString extends FieldModel
 
     public function get(): string
     {
-        if (!($this->buffer instanceof ReadBuffer)) {
-            throw new \RuntimeException('Cannot read from WriteBuffer');
-        }
 
         [$value, $consumed] = $this->buffer->readStringInline($this->offset);
         $this->cachedSize = $consumed;
@@ -42,5 +39,18 @@ final class FieldModelString extends FieldModel
         }
 
         $this->cachedSize = $this->buffer->writeStringInline($this->offset, $value);
+    }
+
+    public function toJson(): string
+    {
+        return $this->get();
+    }
+
+    public function fromJson(mixed $value): void
+    {
+        if (!is_string($value)) {
+            throw new \InvalidArgumentException('Expected string, got ' . get_debug_type($value));
+        }
+        $this->set($value);
     }
 }

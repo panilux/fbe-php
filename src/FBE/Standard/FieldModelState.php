@@ -23,9 +23,6 @@ final class FieldModelState extends FieldModelFlags
 
     public function get(): int
     {
-        if (!($this->buffer instanceof ReadBuffer)) {
-            throw new \RuntimeException('Buffer is not readable');
-        }
 
         return $this->buffer->readUInt8($this->offset);
     }

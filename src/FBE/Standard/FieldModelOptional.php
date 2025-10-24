@@ -61,9 +61,6 @@ abstract class FieldModelOptional extends FieldModel
      */
     public function get(): mixed
     {
-        if (!($this->buffer instanceof ReadBuffer)) {
-            throw new \RuntimeException('Cannot read from WriteBuffer');
-        }
 
         if (!$this->hasValue()) {
             return null;
@@ -91,5 +88,29 @@ abstract class FieldModelOptional extends FieldModel
             $this->writeValue($this->buffer, $this->offset + 1, $value);
             $this->cachedHasValue = true;
         }
+    }
+
+    /**
+     * Convert to JSON-encodable value
+     *
+     * Note: This works for primitive types and strings.
+     * For complex types (UUID, Decimal), override in subclass.
+     */
+    public function toJson(): mixed
+    {
+        return $this->get();
+    }
+
+    /**
+     * Set value from JSON-decoded data
+     *
+     * Note: This works for primitive types and strings.
+     * For complex types (UUID, Decimal), override in subclass.
+     *
+     * @param mixed $value JSON-decoded value (null or value)
+     */
+    public function fromJson(mixed $value): void
+    {
+        $this->set($value);
     }
 }

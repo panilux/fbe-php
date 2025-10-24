@@ -23,9 +23,6 @@ final class FieldModelArrayInt32 extends FieldModelArray
 
     public function get(): array
     {
-        if (!($this->buffer instanceof ReadBuffer)) {
-            throw new \RuntimeException('Buffer is not readable');
-        }
 
         $result = [];
         $offset = $this->offset;

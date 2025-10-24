@@ -16,17 +16,24 @@ final class FieldModelUInt16 extends FieldModel
 
     public function get(): int
     {
-        if (!($this->buffer instanceof ReadBuffer)) {
-            throw new \RuntimeException('Cannot read from WriteBuffer');
-        }
         return $this->buffer->readUInt16($this->offset);
     }
 
     public function set(int $value): void
     {
-        if (!($this->buffer instanceof WriteBuffer)) {
-            throw new \RuntimeException('Cannot write to ReadBuffer');
-        }
         $this->buffer->writeUInt16($this->offset, $value);
+    }
+
+    public function toJson(): int
+    {
+        return $this->get();
+    }
+
+    public function fromJson(mixed $value): void
+    {
+        if (!is_int($value)) {
+            throw new \InvalidArgumentException('Expected int, got ' . get_debug_type($value));
+        }
+        $this->set($value);
     }
 }

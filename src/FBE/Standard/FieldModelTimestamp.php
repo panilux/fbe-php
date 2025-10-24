@@ -15,9 +15,6 @@ final class FieldModelTimestamp extends FieldModel
 
     public function get(): int
     {
-        if (!($this->buffer instanceof ReadBuffer)) {
-            throw new \RuntimeException('Cannot read from WriteBuffer');
-        }
         return $this->buffer->readTimestamp($this->offset);
     }
 
@@ -27,5 +24,19 @@ final class FieldModelTimestamp extends FieldModel
             throw new \RuntimeException('Cannot write to ReadBuffer');
         }
         $this->buffer->writeTimestamp($this->offset, $nanoseconds);
+    }
+
+    public function toJson(): int
+    {
+        return $this->get();
+    }
+
+    public function fromJson(mixed $value): void
+    {
+        if (!is_int($value) && !is_float($value)) {
+            throw new \InvalidArgumentException('Expected int or float (nanoseconds), got ' . get_debug_type($value));
+        }
+        // Convert float to int if needed (PHP converts large ints to float)
+        $this->set((int)$value);
     }
 }

@@ -28,9 +28,6 @@ final class FieldModelArrayString extends FieldModelArray
 
     public function get(): array
     {
-        if (!($this->buffer instanceof ReadBuffer)) {
-            throw new \RuntimeException('Buffer is not readable');
-        }
 
         $result = [];
         $offset = $this->offset;
@@ -60,6 +57,19 @@ final class FieldModelArrayString extends FieldModelArray
         }
 
         $this->validateArraySize($value);
+
+        // Reserve space for pointer array first (N × 4 bytes)
+        // This ensures allocate() returns offsets AFTER the pointer area
+        $pointerAreaSize = $this->arraySize * 4;
+        $currentSize = strlen($this->buffer->data());
+
+        if ($currentSize < $this->offset + $pointerAreaSize) {
+            // Allocate pointer area if not already allocated
+            $needed = ($this->offset + $pointerAreaSize) - $currentSize;
+            if ($needed > 0) {
+                $this->buffer->allocate($needed);
+            }
+        }
 
         $offset = $this->offset;
         $this->extraSize = 0;

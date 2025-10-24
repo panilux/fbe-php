@@ -28,9 +28,6 @@ final class FieldModelListInt32 extends FieldModelList
 
     public function get(): array
     {
-        if (!($this->buffer instanceof ReadBuffer)) {
-            throw new \RuntimeException('Buffer is not readable');
-        }
 
         // Read count
         $count = $this->buffer->readUInt32($this->offset);

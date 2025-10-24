@@ -28,9 +28,6 @@ final class FieldModelSetString extends FieldModelSet
 
     public function get(): array
     {
-        if (!($this->buffer instanceof ReadBuffer)) {
-            throw new \RuntimeException('Buffer is not readable');
-        }
 
         // Read pointer
         $mainPointer = $this->buffer->readUInt32($this->offset);

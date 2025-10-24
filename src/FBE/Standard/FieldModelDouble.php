@@ -12,9 +12,6 @@ final class FieldModelDouble extends FieldModel
 
     public function get(): float
     {
-        if (!($this->buffer instanceof ReadBuffer)) {
-            throw new \RuntimeException('Cannot read from WriteBuffer');
-        }
         return $this->buffer->readDouble($this->offset);
     }
 
@@ -24,5 +21,18 @@ final class FieldModelDouble extends FieldModel
             throw new \RuntimeException('Cannot write to ReadBuffer');
         }
         $this->buffer->writeDouble($this->offset, $value);
+    }
+
+    public function toJson(): float
+    {
+        return $this->get();
+    }
+
+    public function fromJson(mixed $value): void
+    {
+        if (!is_float($value) && !is_int($value)) {
+            throw new \InvalidArgumentException('Expected float or int, got ' . get_debug_type($value));
+        }
+        $this->set((float)$value);
     }
 }

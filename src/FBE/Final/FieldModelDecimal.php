@@ -16,9 +16,6 @@ final class FieldModelDecimal extends FieldModel
 
     public function get(): Decimal
     {
-        if (!($this->buffer instanceof ReadBuffer)) {
-            throw new \RuntimeException('Cannot read from WriteBuffer');
-        }
         return $this->buffer->readDecimal($this->offset);
     }
 
@@ -28,5 +25,18 @@ final class FieldModelDecimal extends FieldModel
             throw new \RuntimeException('Cannot write to ReadBuffer');
         }
         $this->buffer->writeDecimal($this->offset, $decimal);
+    }
+
+    public function toJson(): string
+    {
+        return $this->get()->toString();
+    }
+
+    public function fromJson(mixed $value): void
+    {
+        if (!is_string($value)) {
+            throw new \InvalidArgumentException('Expected decimal string, got ' . get_debug_type($value));
+        }
+        $this->set(Decimal::fromString($value));
     }
 }

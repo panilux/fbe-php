@@ -61,9 +61,6 @@ abstract class FieldModelVector extends FieldModel
      */
     public function get(): array
     {
-        if (!($this->buffer instanceof ReadBuffer)) {
-            throw new \RuntimeException('Cannot read from WriteBuffer');
-        }
 
         $pointer = $this->buffer->readUInt32($this->offset);
         if ($pointer === 0) {
@@ -130,5 +127,32 @@ abstract class FieldModelVector extends FieldModel
         }
 
         return $this->buffer->readUInt32($pointer);
+    }
+
+    /**
+     * Convert to JSON-encodable array
+     *
+     * Note: This works for primitive types and strings.
+     * For complex types (UUID, Decimal), override in subclass.
+     */
+    public function toJson(): array
+    {
+        return $this->get();
+    }
+
+    /**
+     * Set vector from JSON-decoded array
+     *
+     * Note: This works for primitive types and strings.
+     * For complex types (UUID, Decimal), override in subclass.
+     *
+     * @param mixed $value JSON-decoded value (array expected)
+     */
+    public function fromJson(mixed $value): void
+    {
+        if (!is_array($value)) {
+            throw new \InvalidArgumentException('Expected array, got ' . get_debug_type($value));
+        }
+        $this->set($value);
     }
 }
