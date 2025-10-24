@@ -1,0 +1,55 @@
+// Test schema for fbec-v2 generator
+domain com.example;
+package trading;
+
+// Enum test
+enum OrderSide : int32 {
+    buy = 0;
+    sell = 1;
+}
+
+enum OrderType : int32 {
+    market;
+    limit;
+    stop;
+    stopLimit;
+}
+
+// Flags test
+flags OrderFlags : int32 {
+    none = 0x00;
+    ioc = 0x01;
+    gtc = 0x02;
+    hidden = 0x04;
+    postOnly = 0x08;
+}
+
+// Simple struct
+struct Account(1) {
+    [key] int32 id;
+    string username;
+    double balance;
+    timestamp createdAt;
+}
+
+// Struct with collections
+struct Order(2) {
+    [key] int64 orderId;
+    int32 accountId;
+    string symbol;
+    OrderSide side;
+    OrderType type;
+    double price;
+    double quantity;
+    uuid correlationId;
+}
+
+// Struct with optional fields
+struct Trade(3) {
+    int64 tradeId;
+    int64 orderId;
+    string symbol;
+    double price;
+    double quantity;
+    timestamp executedAt;
+}
