@@ -214,6 +214,24 @@ final class WriteBuffer extends Buffer
         $this->writeRawBytes($offset, pack('d', $value));
     }
 
+    /**
+     * Write char (1 byte, unsigned character)
+     * Alias for writeUInt8 for FBE spec compatibility
+     */
+    public function writeChar(int $offset, int $value): void
+    {
+        $this->writeUInt8($offset, $value);
+    }
+
+    /**
+     * Write wchar (4 bytes, little-endian, unsigned Unicode character)
+     * Alias for writeUInt32 for FBE spec compatibility
+     */
+    public function writeWChar(int $offset, int $value): void
+    {
+        $this->writeUInt32($offset, $value);
+    }
+
     // ========================================================================
     // STRING OPERATIONS (Standard vs Final formats)
     // ========================================================================

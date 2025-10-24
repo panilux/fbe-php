@@ -130,6 +130,24 @@ final class ReadBuffer extends Buffer
         return unpack('d', substr($this->data, $this->absoluteOffset($offset), 8))[1];
     }
 
+    /**
+     * Read char (1 byte, unsigned character)
+     * Alias for readUInt8 for FBE spec compatibility
+     */
+    public function readChar(int $offset): int
+    {
+        return $this->readUInt8($offset);
+    }
+
+    /**
+     * Read wchar (4 bytes, little-endian, unsigned Unicode character)
+     * Alias for readUInt32 for FBE spec compatibility
+     */
+    public function readWChar(int $offset): int
+    {
+        return $this->readUInt32($offset);
+    }
+
     // ========================================================================
     // STRING OPERATIONS (Standard vs Final formats)
     // ========================================================================

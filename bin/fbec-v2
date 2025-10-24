@@ -414,7 +414,9 @@ class FBEGeneratorV2
         // Map FBE types to FieldModel names
         $mapping = [
             'bool' => 'FieldModelBool',
-            'byte' => 'FieldModelInt8',
+            'byte' => 'FieldModelUInt8',
+            'char' => 'FieldModelChar',
+            'wchar' => 'FieldModelWChar',
             'int8' => 'FieldModelInt8',
             'int16' => 'FieldModelInt16',
             'int32' => 'FieldModelInt32',
@@ -688,6 +690,8 @@ class FBEGeneratorV2
             $fixedSizes = [
                 'bool' => 1,
                 'byte' => 1,
+                'char' => 1,
+                'wchar' => 4,
                 'int8' => 1,
                 'int16' => 2,
                 'int32' => 4,
