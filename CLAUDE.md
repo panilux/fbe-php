@@ -8,9 +8,9 @@ FBE (Fast Binary Encoding) for PHP - A **production-grade, rock-solid** binary s
 
 **Critical:** This is a PHP 8.4+ project that uses modern PHP features including property hooks and readonly properties.
 
-**Status:** V2 production-grade implementation complete with 159 tests, 487 assertions, full FBE spec compliance, and security hardening.
+**Status:** Production-grade implementation complete with 159 tests, 487 assertions, full FBE spec compliance, and security hardening.
 
-**Performance:** 5-10 μs/op (10x faster than v1), bounds checking on all operations, 20-38% size reduction with Final format.
+**Performance:** 5-10 μs/op, bounds checking on all operations, 20-38% size reduction with Final format.
 
 ## Build & Test Commands
 
@@ -34,7 +34,7 @@ composer test:coverage
 
 ### Code Generation
 ```bash
-# Generate PHP code from .fbe schema (V2 FieldModel-based)
+# Generate PHP code from .fbe schema (FieldModel-based)
 bin/fbec schema.fbe output_directory/ [--format=both|standard|final]
 
 # Examples
@@ -51,7 +51,7 @@ composer install          # Install dependencies
 composer dump-autoload    # Regenerate autoloader
 ```
 
-## Core Architecture (V2 Production-Grade)
+## Core Architecture (Production-Grade)
 
 ### Directory Structure
 
@@ -221,7 +221,7 @@ FBE\Standard\             FBE\Final\
 - Final: Inline (identical to Standard)
 - **No difference** (enums are always fixed-size)
 
-### FBE Binary Format Rules (V2)
+### FBE Binary Format Rules
 
 #### Fixed-Size Types (Always Inline)
 Primitives stored directly at offset (same in both formats):
@@ -328,7 +328,7 @@ Binary format is 100% compatible with:
 - Python implementation (official FBE)
 - C++ implementation (official FBE)
 
-V2 implementation follows the FBE specification exactly, ensuring cross-platform binary compatibility.
+Implementation follows the FBE specification exactly, ensuring cross-platform binary compatibility.
 
 ## Development Patterns
 
@@ -388,7 +388,7 @@ class Employee extends Person {
 4. Run tests with `vendor/bin/phpunit`
 5. Aim for comprehensive test coverage
 
-## V2 Implementation Status
+## Implementation Status
 
 ### ✅ Completed (Production-Ready)
 
@@ -418,7 +418,7 @@ class Employee extends Person {
    - ✅ Example implementations (Person, Order, Account, Trade)
 
 5. **Testing**
-   - ✅ 104 tests, 273 assertions (V2 production-grade)
+   - ✅ 104 tests, 273 assertions (production-grade)
    - ✅ Unit tests covering all FieldModel types
    - ✅ Integration tests for complex structures
    - ✅ Size comparison tests (Standard vs Final)
@@ -529,9 +529,9 @@ bin/fbec                     # Code generator (PHP script)
 
 ## Performance Considerations
 
-- V2 buffer operations use optimized bulk writes (`substr_replace`)
-- WriteBuffer: 9.93 μs/op (10x faster than v1)
-- ReadBuffer: 5.50 μs/op (8x faster than v1)
+- Buffer operations use optimized bulk writes (`substr_replace`)
+- WriteBuffer: 9.93 μs/op
+- ReadBuffer: 5.50 μs/op
 - WriteBuffer grows by 2x when capacity exceeded
 - Bounds checking adds minimal overhead (< 5%)
 - Final format is 20-38% smaller than Standard format

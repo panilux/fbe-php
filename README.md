@@ -10,7 +10,7 @@
 
 ## 🚀 Features
 
-### V2 Production-Grade Implementation
+### Production-Grade Implementation
 
 - ✅ **100% FBE Spec Compliance** - All critical bugs fixed
 - ✅ **Security Hardened** - Bounds checking on ALL operations
@@ -56,8 +56,8 @@ composer require panilux/fbe-php
 ```php
 <?php
 
-use FBE\V2\Common\{WriteBuffer, ReadBuffer};
-use FBE\V2\Standard\{FieldModelInt32, FieldModelString};
+use FBE\Common\{WriteBuffer, ReadBuffer};
+use FBE\Standard\{FieldModelInt32, FieldModelString};
 
 // Serialize
 $writeBuffer = new WriteBuffer();
@@ -87,8 +87,8 @@ echo $readCustomerName->get(); // Alice Johnson
 ```php
 <?php
 
-use FBE\V2\Common\{WriteBuffer, ReadBuffer};
-use FBE\V2\Final\{FieldModelInt32, FieldModelString};
+use FBE\Common\{WriteBuffer, ReadBuffer};
+use FBE\Final\{FieldModelInt32, FieldModelString};
 
 // Serialize
 $writeBuffer = new WriteBuffer();
@@ -171,13 +171,13 @@ echo $readCustomerName->get(); // Alice Johnson
 ### FieldModel Classes
 
 ```
-FBE\V2\Standard\          FBE\V2\Final\
-├── FieldModelBool        ├── FieldModelBool
-├── FieldModelInt32       ├── FieldModelInt32
-├── FieldModelString      ├── FieldModelString (inline)
-├── FieldModelVector      ├── FieldModelVector (inline)
-├── FieldModelOptional    ├── FieldModelOptional (inline)
-└── ...                   └── ...
+FBE\Standard\          FBE\Final\
+├── FieldModelBool     ├── FieldModelBool
+├── FieldModelInt32    ├── FieldModelInt32
+├── FieldModelString   ├── FieldModelString (inline)
+├── FieldModelVector   ├── FieldModelVector (inline)
+├── FieldModelOptional ├── FieldModelOptional (inline)
+└── ...                └── ...
 ```
 
 ## 📏 Size Comparison
@@ -209,7 +209,7 @@ vendor/bin/phpunit --testdox
 composer test:coverage
 ```
 
-**Test Results (V2 Production-Grade):**
+**Test Results (Production-Grade):**
 - ✅ **104 tests passing** (100% pass rate)
 - ✅ **273 assertions**
 - ✅ Comprehensive coverage:
@@ -226,7 +226,7 @@ composer test:coverage
 ### Working with Vectors
 
 ```php
-use FBE\V2\Final\FieldModelVectorString;
+use FBE\Final\FieldModelVectorString;
 
 $writeBuffer = new WriteBuffer();
 $writeBuffer->allocate(500);
@@ -245,7 +245,7 @@ echo $readItems->count();   // 3
 ### Working with Optional Fields
 
 ```php
-use FBE\V2\Final\FieldModelOptionalString;
+use FBE\Final\FieldModelOptionalString;
 
 $writeBuffer = new WriteBuffer();
 $writeBuffer->allocate(200);
@@ -265,8 +265,8 @@ $notes->set(null);
 ### Working with UUID
 
 ```php
-use FBE\V2\Types\Uuid;
-use FBE\V2\Standard\FieldModelUuid;
+use FBE\Types\Uuid;
+use FBE\Standard\FieldModelUuid;
 
 $uuid = Uuid::random();
 echo $uuid->toString(); // 550e8400-e29b-41d4-a716-446655440000
@@ -288,8 +288,8 @@ echo $readUuid->toString();
 ### Working with Decimal
 
 ```php
-use FBE\V2\Types\Decimal;
-use FBE\V2\Standard\FieldModelDecimal;
+use FBE\Types\Decimal;
+use FBE\Standard\FieldModelDecimal;
 
 $price = Decimal::fromString('999.99');
 
@@ -452,7 +452,7 @@ $user->username()->set('alice');
 
 ## 🔐 Security
 
-V2 implementation includes production-grade security features:
+Implementation includes production-grade security features:
 
 - ✅ **Bounds checking** on ALL buffer operations
 - ✅ **BufferOverflowException** prevents overflow attacks
@@ -464,15 +464,15 @@ V2 implementation includes production-grade security features:
 
 Benchmark results (macOS, PHP 8.4, Apple Silicon):
 
-| Operation | V1 (legacy) | V2 | Improvement |
-|-----------|-------------|-----|-------------|
-| WriteBuffer | ~50-100 μs/op | 9.93 μs/op | **10x faster** |
-| ReadBuffer | ~30-50 μs/op | 5.50 μs/op | **8x faster** |
-| Bounds checking | ❌ None | ✅ All ops | **Security** |
+| Operation | Performance |
+|-----------|-------------|
+| WriteBuffer | 9.93 μs/op |
+| ReadBuffer | 5.50 μs/op |
+| Bounds checking | ✅ All operations |
 
 ## 🗺️ Roadmap
 
-### ✅ Completed (V2 Production-Ready)
+### ✅ Completed (Production-Ready)
 - [x] Security-hardened buffers
 - [x] UUID big-endian (RFC 4122)
 - [x] Decimal 96-bit GMP
@@ -499,7 +499,7 @@ Benchmark results (macOS, PHP 8.4, Apple Silicon):
 - [CLAUDE.md](CLAUDE.md) - Comprehensive development guide
 - [FBE_SPEC_COMPLIANCE_FINAL.md](FBE_SPEC_COMPLIANCE_FINAL.md) - Complete spec compliance analysis
 - [CPP_COMPATIBILITY_TEST.md](CPP_COMPATIBILITY_TEST.md) - C++ binary compatibility verification
-- [COMPLETION_SUMMARY.md](COMPLETION_SUMMARY.md) - V2 implementation summary
+- [COMPLETION_SUMMARY.md](COMPLETION_SUMMARY.md) - Implementation summary
 
 ## 🤝 Cross-Platform Compatibility
 
@@ -508,21 +508,13 @@ Binary format is 100% compatible with:
 - Python implementation (official FBE)
 - C++ implementation (official FBE)
 
-## ⚠️ Migration from V1
+## 📖 Usage
 
-**DO NOT use V1 code for new development:**
+Use the production-grade namespaces:
 
-❌ Old (V1):
 ```php
-use FBE\WriteBuffer;  // No bounds checking
-use FBE\ReadBuffer;   // Insecure
-```
-
-✅ New (V2):
-```php
-use FBE\V2\Common\WriteBuffer;  // Security hardened
-use FBE\V2\Common\ReadBuffer;   // Bounds checking
-use FBE\V2\Standard\*;          // Or FBE\V2\Final\*
+use FBE\Common\{WriteBuffer, ReadBuffer};
+use FBE\Standard\*;  // Or FBE\Final\* for compact format
 ```
 
 ## 📄 License

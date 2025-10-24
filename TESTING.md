@@ -1,24 +1,24 @@
-# FBE PHP V2 Testing Guide
+# FBE PHP Testing Guide
 
 ## Running Tests
 
 ### Quick Start
 
-Run all V2 tests:
+Run all tests:
 ```bash
-vendor/bin/phpunit tests/V2/ --colors=always --testdox
+vendor/bin/phpunit --colors=always --testdox
 ```
 
 Run specific test suite:
 ```bash
 # Unit tests only
-vendor/bin/phpunit tests/V2/Unit/ --colors=always --testdox
+vendor/bin/phpunit tests/Unit/ --colors=always --testdox
 
 # Integration tests only
-vendor/bin/phpunit tests/V2/Integration/ --colors=always --testdox
+vendor/bin/phpunit tests/Integration/ --colors=always --testdox
 
 # Specific test file
-vendor/bin/phpunit tests/V2/Unit/WriteBufferTest.php
+vendor/bin/phpunit tests/Unit/WriteBufferTest.php
 ```
 
 ### Using Composer
@@ -38,7 +38,7 @@ composer test:coverage
 ### Test Organization
 
 ```
-tests/V2/
+tests/
 ├── Unit/                    # Unit tests (153 tests)
 │   ├── WriteBufferTest.php  # Buffer write operations
 │   ├── ReadBufferTest.php   # Buffer read operations
@@ -107,7 +107,7 @@ PHPUnit 11.5.2 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.4.2
 Configuration: /Users/mit/Documents/works/gitlab/panilux/fbe-php/phpunit.xml
 
-WriteBuffer (FBE\Tests\V2\Unit\WriteBuffer)
+WriteBuffer (FBE\Tests\Unit\WriteBuffer)
  ✔ Constructor
  ✔ Allocate
  ✔ Write bool
@@ -153,7 +153,7 @@ OK (159 tests, 487 assertions)
 
 declare(strict_types=1);
 
-namespace FBE\Tests\V2\Unit;
+namespace FBE\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 
@@ -176,7 +176,7 @@ class MyFeatureTest extends TestCase
 ### 2. Run Test
 
 ```bash
-vendor/bin/phpunit tests/V2/Unit/MyFeatureTest.php
+vendor/bin/phpunit tests/Unit/MyFeatureTest.php
 ```
 
 ### 3. Test Naming Conventions
@@ -254,21 +254,21 @@ jobs:
 
 Run tests with verbose output:
 ```bash
-vendor/bin/phpunit tests/V2/ --verbose
+vendor/bin/phpunit --verbose
 ```
 
 Show test execution order:
 ```bash
-vendor/bin/phpunit tests/V2/ --testdox --order-by=depends
+vendor/bin/phpunit --testdox --order-by=depends
 ```
 
 ## Performance Testing
 
-V2 benchmarks (macOS, PHP 8.4, Apple Silicon):
+Benchmarks (macOS, PHP 8.4, Apple Silicon):
 
 ```
-WriteBuffer: 9.93 μs/op  (10x faster than v1)
-ReadBuffer:  5.50 μs/op  (8x faster than v1)
+WriteBuffer: 9.93 μs/op
+ReadBuffer:  5.50 μs/op
 
 Person struct (Standard): 21 bytes
 Person struct (Final):    13 bytes (38% smaller)
@@ -280,7 +280,7 @@ Vector<String> [100 elements]:
 
 ## Cross-Platform Compatibility
 
-V2 binary format is 100% compatible with:
+Binary format is 100% compatible with:
 - Rust implementation (panilux/fbe-rust)
 - Python implementation (official FBE)
 - C++ implementation (official FBE)
