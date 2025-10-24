@@ -708,7 +708,15 @@ class FBEGenerator
             return $name;
         }
 
-        // For enums/custom types
+        // Check if this is a struct type (nested struct)
+        foreach ($this->structs as $struct) {
+            if ($struct['name'] === $field['fbeType']) {
+                // Nested struct: use StructModel directly (not FieldModelStruct)
+                return ucfirst($field['fbeType']) . 'Model';
+            }
+        }
+
+        // For unknown types, fallback (should not happen)
         return 'FieldModel' . ucfirst($field['fbeType']);
     }
 
@@ -1032,8 +1040,60 @@ class FBEGenerator
             return $value;
         }
 
+        // Enum/Flag reference (e.g., "Status.pending" or "Permissions.read | Permissions.write")
+        if (str_contains($value, '.') || str_contains($value, '|')) {
+            return $this->convertEnumFlagReference($value);
+        }
+
         // Default: treat as string
         return "\"$value\"";
+    }
+
+    private function convertEnumFlagReference(string $value): string
+    {
+        // Handle bitwise OR combinations (e.g., "Permissions.read | Permissions.write")
+        if (str_contains($value, '|')) {
+            $parts = array_map('trim', explode('|', $value));
+            $converted = [];
+            foreach ($parts as $part) {
+                $converted[] = $this->convertSingleEnumReference($part);
+            }
+            return implode(' | ', $converted);
+        }
+
+        // Single enum reference
+        return $this->convertSingleEnumReference($value);
+    }
+
+    private function convertSingleEnumReference(string $ref): string
+    {
+        // Parse "EnumName.value" → find enum value
+        if (str_contains($ref, '.')) {
+            [$enumName, $enumValue] = explode('.', $ref, 2);
+            $enumName = trim($enumName);
+            $enumValue = trim($enumValue);
+
+            // Find enum/flag in parsed data
+            foreach ($this->enums as $enum) {
+                if ($enum['name'] === $enumName && isset($enum['values'][$enumValue])) {
+                    return $enum['values'][$enumValue]; // Return numeric value
+                }
+            }
+
+            foreach ($this->flags as $flag) {
+                if ($flag['name'] === $enumName && isset($flag['values'][$enumValue])) {
+                    $flagValue = $flag['values'][$enumValue];
+                    // If the value contains references to other flags, evaluate it
+                    if (str_contains($flagValue, 'self::')) {
+                        return $flagValue; // Keep self:: references
+                    }
+                    return $flagValue;
+                }
+            }
+        }
+
+        // Fallback: return as-is
+        return $ref;
     }
 
     private function calculateMinimumSize(array $fields): int
