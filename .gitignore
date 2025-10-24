@@ -63,3 +63,9 @@ coverage/
 test/gen_*/
 *.generated.php
 
+# Documentation archive
+_docs/
+
+# Claude Code settings
+.claude/
+
