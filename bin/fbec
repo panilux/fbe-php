@@ -1,7 +1,7 @@
 #!/usr/bin/env php
 <?php
 /**
- * Fast Binary Encoding compiler for PHP (V2)
+ * Fast Binary Encoding compiler for PHP
  *
  * Generates modern FieldModel-based code from .fbe schema files
  *
@@ -16,7 +16,7 @@
 declare(strict_types=1);
 
 if ($argc < 3) {
-    fwrite(STDERR, "Usage: fbec-v2 <input.fbe> <output_dir> [--format=both|standard|final] [--proto]\n");
+    fwrite(STDERR, "Usage: fbec <input.fbe> <output_dir> [--format=both|standard|final] [--proto]\n");
     exit(1);
 }
 
@@ -35,7 +35,7 @@ for ($i = 3; $i < $argc; $i++) {
 }
 
 try {
-    $generator = new FBEGeneratorV2();
+    $generator = new FBEGenerator();
     $generator->generate($inputFile, $outputDir, $format, $generateProtocol);
     echo "✓ Code generation successful!\n";
 } catch (Exception $e) {
@@ -44,7 +44,7 @@ try {
     exit(1);
 }
 
-class FBEGeneratorV2
+class FBEGenerator
 {
     private array $enums = [];
     private array $flags = [];
