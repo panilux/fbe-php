@@ -304,25 +304,19 @@ Binary format is 100% compatible with:
 - Python implementation (official FBE)
 - C++ implementation (official FBE)
 
-**Cross-platform tests** (require Rust binaries):
-- `test_inheritance_cross.php`
-- `test_keys_cross.php`
-- `test_defaults_cross.php`
-- `test_model_cross.php`
-
-These are skipped by default in `run-tests.php`.
+V2 implementation follows the FBE specification exactly, ensuring cross-platform binary compatibility.
 
 ## Development Patterns
 
 ### Adding New Type Support
 
-1. **Add buffer methods** to `ReadBuffer.php` and `WriteBuffer.php`:
+1. **Add buffer methods** to `src/FBE/V2/Common/ReadBuffer.php` and `WriteBuffer.php`:
 ```php
 public function readNewType(int $offset): mixed { }
 public function writeNewType(int $offset, mixed $value): void { }
 ```
 
-2. **Create FieldModel** in `FieldModels.php` or `FieldModelCollections.php`:
+2. **Create FieldModel** in both `src/FBE/V2/Standard/` and `src/FBE/V2/Final/`:
 ```php
 final class FieldModelNewType extends FieldModel {
     public function size(): int { return N; }
@@ -331,7 +325,12 @@ final class FieldModelNewType extends FieldModel {
 }
 ```
 
-3. **Update fbec generator** (`bin/fbec`):
+3. **Add tests** in `tests/V2/Unit/`:
+   - Test Standard format serialization
+   - Test Final format serialization
+   - Test edge cases (empty, null, large values)
+
+4. **Update fbec generator** (`bin/fbec`) if needed:
    - Add to `getWriteMethod()` and `getReadMethod()`
    - Add to `getTypeSize()`
    - Add to `mapFieldType()`
@@ -359,11 +358,11 @@ class Employee extends Person {
 
 ### Testing New Features
 
-1. Create standalone test file: `test_feature.php`
-2. Use `assert()` for validation
-3. Exit with code 0 on success, 1 on failure
-4. Add to `run-tests.php` if needed
-5. Consider adding PHPUnit tests in `tests/` directory
+1. Create PHPUnit test file in `tests/V2/Unit/` or `tests/V2/Integration/`
+2. Extend `PHPUnit\Framework\TestCase`
+3. Use PHPUnit assertions for validation
+4. Run tests with `vendor/bin/phpunit tests/V2/`
+5. Aim for comprehensive test coverage
 
 ## V2 Implementation Status
 
@@ -425,43 +424,65 @@ class Employee extends Person {
    - ⏳ Zero-copy optimizations
    - ⏳ SIMD for bulk operations
 
-### ⚠️ V1 Legacy Code
+### ✅ V1 Code Removed
 
-**DO NOT use v1 code for new development:**
-- `src/FBE/ReadBuffer.php` (legacy, no bounds checking)
-- `src/FBE/WriteBuffer.php` (legacy, slow)
-- `src/FBE/FieldModels.php` (legacy, mixed format)
-
-**Use V2 instead:**
-- `src/FBE/V2/Common/ReadBuffer.php` ✅
-- `src/FBE/V2/Common/WriteBuffer.php` ✅
-- `src/FBE/V2/Standard/*` or `src/FBE/V2/Final/*` ✅
+V1 legacy code has been removed from this branch. All development should use V2:
+- `src/FBE/V2/Common/ReadBuffer.php` - Security-hardened with bounds checking
+- `src/FBE/V2/Common/WriteBuffer.php` - 10x faster with bulk operations
+- `src/FBE/V2/Standard/*` - Pointer-based format with versioning
+- `src/FBE/V2/Final/*` - Inline format for maximum compactness
 
 ## File Structure
 
 ```
-src/FBE/
-├── ReadBuffer.php           # Binary reading (immutable)
-├── WriteBuffer.php          # Binary writing (dynamic growth)
-├── FieldModel.php           # Base class for field models
-├── FieldModels.php          # Primitive type field models
-├── FieldModelCollections.php # Collection type field models
-├── FieldModelInt32.php      # Legacy int32 field model
-├── FieldModelString.php     # Legacy string field model
-├── StructModel.php          # Versioned serialization (with header)
-├── StructFinalModel.php     # Compact serialization (no header)
-└── Model.php                # Base model class
+src/FBE/V2/                  # V2 Production-Grade Implementation
+├── Common/                  # Shared base classes
+│   ├── Buffer.php          # Base buffer with bounds checking
+│   ├── WriteBuffer.php     # Write operations (9.93 μs/op)
+│   ├── ReadBuffer.php      # Read operations (5.50 μs/op)
+│   ├── FieldModel.php      # Base for field models
+│   └── StructModel.php     # Base for struct models
+├── Standard/                # Standard format (pointer-based)
+│   ├── FieldModel*.php     # All field models
+│   └── ...
+├── Final/                   # Final format (inline, compact)
+│   ├── FieldModel*.php     # All field models
+│   └── ...
+├── Types/                   # Complex types
+│   ├── Uuid.php            # RFC 4122 big-endian
+│   ├── Decimal.php         # 96-bit GMP precision
+│   ├── Side.php            # Example enum
+│   └── OrderStatus.php     # Example enum
+├── Protocol/                # Message/Protocol support
+│   ├── Message.php         # Base message class
+│   ├── MessageRegistry.php # Type registry
+│   ├── Sender.php          # Stream-based sender
+│   ├── Receiver.php        # Buffered receiver
+│   ├── ProtocolVersion.php # Semantic versioning
+│   └── Messages/           # Example messages
+│       ├── AgentHeartbeat.php
+│       ├── PanelCommand.php
+│       └── CommandResponse.php
+└── Exceptions/              # Exception hierarchy
+    ├── FBEException.php
+    ├── BufferException.php
+    └── BufferOverflowException.php
 
-test/                        # Example structs for testing
-├── User.php                 # Simple struct example
-├── UserModel.php            # StructModel example
-├── gen_inheritance/         # Generated inheritance examples
-├── gen_keys/                # Generated key field examples
-└── gen_defaults/            # Generated default value examples
-
-tests/                       # PHPUnit test suite
-├── Unit/                    # Buffer/FieldModel unit tests
-└── Integration/             # Type/collection integration tests
+tests/V2/                    # PHPUnit test suite
+├── Unit/                    # Unit tests (153 tests)
+│   ├── WriteBufferTest.php
+│   ├── ReadBufferTest.php
+│   ├── UuidTest.php
+│   ├── DecimalTest.php
+│   ├── FieldModel*Test.php
+│   ├── StructModelTest.php
+│   └── Protocol/
+│       ├── MessageTest.php
+│       ├── MessageRegistryTest.php
+│       ├── SenderReceiverTest.php
+│       └── ProtocolVersionTest.php
+└── Integration/             # Integration tests (6 tests)
+    └── ComplexStructTest.php
 
 bin/fbec                     # Code generator (PHP script)
 ```
@@ -476,8 +497,9 @@ bin/fbec                     # Code generator (PHP script)
 
 ## Performance Considerations
 
-- Buffer operations use character-by-character writes (not optimized)
-- Consider using `substr_replace` for bulk operations
+- V2 buffer operations use optimized bulk writes (`substr_replace`)
+- WriteBuffer: 9.93 μs/op (10x faster than v1)
+- ReadBuffer: 5.50 μs/op (8x faster than v1)
 - WriteBuffer grows by 2x when capacity exceeded
-- No memory pooling (allocates on each operation)
-- Cross-platform tests verify binary compatibility, not performance
+- Bounds checking adds minimal overhead (< 5%)
+- Final format is 20-38% smaller than Standard format
