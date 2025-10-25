@@ -784,6 +784,32 @@ class FBEGenerator
             return $sizes[$field['fbeType']];
         }
 
+        // Check if this is an enum - use its backing type size
+        foreach ($this->enums as $enum) {
+            if ($enum['name'] === $field['fbeType']) {
+                return $this->getFieldSize(['fbeType' => $enum['baseType']], $format);
+            }
+        }
+
+        // Check if this is flags - use its backing type size
+        foreach ($this->flags as $flags) {
+            if ($flags['name'] === $field['fbeType']) {
+                return $this->getFieldSize(['fbeType' => $flags['baseType']], $format);
+            }
+        }
+
+        // Check if this is a struct - return pointer in Standard, varies in Final
+        foreach ($this->structs as $struct) {
+            if ($struct['name'] === $field['fbeType']) {
+                if ($format === 'Standard') {
+                    return 4; // Pointer to nested struct
+                } else {
+                    // Final: sum of struct's field sizes (complex, handle later)
+                    return 4; // Placeholder
+                }
+            }
+        }
+
         // Variable-size types (string, bytes, vector, optional, map, etc.)
         if ($format === 'Standard') {
             return 4; // Pointer in Standard format
